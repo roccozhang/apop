@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/chkubus
 	SECTION:=Applications
-	CATEGORY:=helloshiki
+	CATEGORY:=Puppies
 	TITLE:=check whether ubusd is alive
 endef
 
@@ -29,10 +29,28 @@ define Package/chkubus/description
 	check whether ubusd is alive. if dead, restart system.
 endef
 
+
+define Build/Prepare
+	true
+endef
+
+define Build/Compile
+	true
+endef
+
 define Package/chkubus/install
-	echo $(1) $(2)
-	echo $(INSTALL_DIR) $(1)/usr/bin
-	
+	#install -d -m0755 /home/opmt.git/staging_dir/target-mipsel_1004kc+dsp_musl-1.1.10/root-ramips/tmp-chkubus/usr/bin 
+	$(CP) -a ./root/* $(1)/
+endef
+
+define Package/tbqd/postinst
+	true
+	exit 0
+endef
+
+define Package/tbqd/prerm
+	true
+	exit 0
 endef
 
 $(eval $(call BuildPackage,chkubus))
