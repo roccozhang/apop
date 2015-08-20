@@ -1,2 +1,2 @@
 #!/bin/sh
-lua /ugw/apps/chkubus/main.lua &
+/ugw/script/watchdog.sh
