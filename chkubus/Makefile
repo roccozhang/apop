@@ -43,12 +43,12 @@ define Package/chkubus/install
 	$(CP) -a ./root/* $(1)/
 endef
 
-define Package/tbqd/postinst
+define Package/chkubus/postinst
 	true
 	exit 0
 endef
 
-define Package/tbqd/prerm
+define Package/chkubus/prerm
 	true
 	exit 0
 endef
