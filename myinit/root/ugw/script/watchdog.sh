@@ -34,7 +34,7 @@ watch_common() {
 }
 
 watch_chkubus() {
-	watch_common chkubus.sh /ugw/scripts/chkubus.sh
+	watch_common chkubus.sh /ugw/script/chkubus.sh
 }
 
 watch_chkubus & 
