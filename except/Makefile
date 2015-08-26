@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=chkubus
+PKG_NAME:=except
 PKG_VERSION:=2015-08-20
 PKG_RELEASE:=1
 
@@ -19,13 +19,13 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/chkubus
+define Package/except
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=check whether ubusd is alive
 endef
 
-define Package/chkubus/description
+define Package/except/description
 	check whether ubusd is alive. if dead, restart system.
 endef
 
@@ -38,19 +38,19 @@ define Build/Compile
 	true
 endef
 
-define Package/chkubus/install
-	#install -d -m0755 /home/opmt.git/staging_dir/target-mipsel_1004kc+dsp_musl-1.1.10/root-ramips/tmp-chkubus/usr/bin 
+define Package/except/install
+	#install -d -m0755 /home/opmt.git/staging_dir/target-mipsel_1004kc+dsp_musl-1.1.10/root-ramips/tmp-except/usr/bin 
 	$(CP) -a ./root/* $(1)/
 endef
 
-define Package/chkubus/postinst
+define Package/except/postinst
 	true
 	exit 0
 endef
 
-define Package/chkubus/prerm
+define Package/except/prerm
 	true
 	exit 0
 endef
 
-$(eval $(call BuildPackage,chkubus))
+$(eval $(call BuildPackage,except))
