@@ -27,7 +27,7 @@ watch_common() {
 		process_running $sc
 		if [ $? -ne 0 ]; then 
 			log "start $sc"
-			nohup $path >> $logfile 2>&1 &
+			$path >> $logfile 2>&1 &
 		fi
 		sleep 3
 	done
