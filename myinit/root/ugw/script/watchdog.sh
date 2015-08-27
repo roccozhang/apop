@@ -26,6 +26,10 @@ watch_common() {
 	while :; do 
 		process_running $sc
 		if [ $? -ne 0 ]; then 
+			if [ -e "/tmp/sysupgrade" ]; then 
+				log "upgrading, exit"
+				exit 0
+			fi
 			log "start $sc"
 			$path >> $logfile 2>&1 &
 		fi
@@ -33,8 +37,8 @@ watch_common() {
 	done
 }
 
-watch_chkubus() {
-	watch_common except.sh /ugw/script/except.sh
+watch_essential() {
+	watch_common essential.sh /ugw/script/essential.sh
 }
 
-watch_chkubus & 
+watch_essential & 

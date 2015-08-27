@@ -35,6 +35,7 @@ mount_backup() {
 	mkdir -p $BACKUP_DIR/root
 	if [ $? -ne 0 ]; then 
 		log "mkdir $BACKUP_DIR/root fail. reboot"
+		sleep 5
 		reboot
 	fi 
 }
