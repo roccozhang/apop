@@ -23,14 +23,13 @@ define Package/$(PKG_NAME)/description
 	lua binding for libuv 
 endef
 
-define Build/Compile
-	echo $(BUILD_DIR)
-	$(MAKE) -C luv-master/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
+define Build/Compile 
+	$(MAKE) -C luv/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS) LIBUV_INC=$(BUILD_DIR)/libuv-v1.6.1/include/ LIBUV_LIB=$(BUILD_DIR)/libuv-v1.6.1/.libs/ 
 endef
 
 define Package/$(PKG_NAME)/install  
 	$(INSTALL_DIR) $(1)/usr/lib/lua/
-	$(INSTALL_BIN) struct-0.2/struct.so $(1)/usr/lib/lua/ 
+	$(INSTALL_BIN) luv/src/uv.so $(1)/usr/lib/lua/ 
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
