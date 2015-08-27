@@ -1,0 +1,29 @@
+language: c
+sudo: false
+
+addons:
+  apt:
+    sources:
+    - kalakris-cmake
+    packages:
+    - cmake
+
+env:
+  - WITH_LUA_ENGINE=LuaJIT
+  - WITH_LUA_ENGINE=Lua
+
+os:
+  - linux
+  - osx
+
+before_install:
+  - git submodule update --init --recursive
+  - git submodule update --recursive
+
+script:
+  - make
+  - make test
+
+notifications:
+  email: true
+  irc: "irc.freenode.org#luvit"

@@ -24,7 +24,8 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Build/Compile
-	$(MAKE) -C struct-0.2 LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
+	echo $(BUILD_DIR)
+	$(MAKE) -C luv-master/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
 endef
 
 define Package/$(PKG_NAME)/install  
