@@ -1,4 +1,6 @@
+local lfs = require("lfs")
 local js = require("cjson.safe")
+
 local md5path = "/backup/md5.json"
 local map = {}
 
@@ -38,6 +40,10 @@ local function set(path, md5)
 	map[path] = md5
 end
 
+local function md5exist()
+	return lfs.attributes(md5path) ~= nil
+end
+
 load()
-return {set = set, get = get, save = save}
+return {set = set, get = get, save = save, md5exist = md5exist}
 

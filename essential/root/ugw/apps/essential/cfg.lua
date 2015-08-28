@@ -10,6 +10,7 @@ local cfg = {
 	{	path = "/etc/config/ucitrack"	}, 
 	{	path = "/etc/config/uhttpd"	}, 
 	{	path = "/etc/config/network"	}, 
+	{	path = "/etc/tc.json"	}, 
 }
 
 return cfg
