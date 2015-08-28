@@ -123,7 +123,7 @@ local function upgrading_exit()
 	end
 end
 
-local config_normal_flag = "/etc/config_normal_flag_do_not_delete"
+local config_normal_flag = "/etc/config/config_normal_flag_do_not_delete"
 local function check_restore()
 	upgrading_exit()
 
