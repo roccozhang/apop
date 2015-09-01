@@ -1,7 +1,7 @@
 local se = require("se") 
 local cfg = require("cfg")
 local lfs = require("lfs")
-local md5 = require("md5")
+local libmd5 = require("md5")
 local cm = require("cfgmd5")
 local js = require("cjson.safe")
 
@@ -36,11 +36,11 @@ local function get_change_files()
 		if attr then
 			local op = last_map[path]
 			if not op then  
-				local md5 = md5.sumhexa(read(path))
+				local md5 = libmd5.sumhexa(read(path))
 				change[path], flag = md5, true
 				last_map[path] = {modification = attr.modification, md5 = md5}
 			elseif op.modification ~= attr.modification then
-				local md5 = md5.sumhexa(read(path))
+				local md5 = libmd5.sumhexa(read(path))
 				if md5 ~= op.md5 then 
 					change[path], flag = md5, true
 					last_map[path] = {modification = attr.modification, md5 = md5}
@@ -97,25 +97,6 @@ local function mount_ready()
 	return true
 end
 
-local function restore(path)
-	local backup_path = string.format("%s%s", backup_root, path)
-	local md5 = md5.sumhexa(read(backup_path))
-	local cmd5 = cm.get(path) or ""
-	if md5 ~= cmd5 then  
-		error("ERROR backup. remove %s %s %s", md5, cmd5, backup_path)
-		os.remove(backup_path)
-		cm.set(path, nil)
-		cm.save()
-		return false
-	end
-
-	local cmd = string.format("cp %s %s; md5sum %s | awk '{print $1}'", backup_path, path, path)
-	local nmd5 = read(cmd, io.popen):gsub("[ \t\r\n]", "")
-	local flag = nmd5 == md5 and "ok" or "fail"
-	error("restore %s %s", flag, path)
-	return true
-end
-
 local function upgrading_exit()
 	if lfs.attributes(upgrade_flag) then 
 		error("upgrading, skip restore")
@@ -153,21 +134,23 @@ local function check_restore()
 	for _, item in pairs(cfg) do 
 		local path = item.path
 		local backup_path = string.format("%s%s", backup_root, path)
-		local md5 = md5.sumhexa(read(backup_path))
-		local cmd5 = cm.get(path) or ""
+		if lfs.attributes(backup_path) then 
+			local md5 = libmd5.sumhexa(read(backup_path))
+			local cmd5 = cm.get(path) or ""
 
-		upgrading_exit()
-		if md5 ~= cmd5 then
-			error("ERROR backup. remove %s %s %s", md5, cmd5, backup_path)
-			os.remove(backup_path)
-			cm.set(path, nil)
-			cm.save()
-		else
-			local cmd = string.format("cp %s %s; md5sum %s | awk '{print $1}'", backup_path, path, path)
-			local nmd5 = read(cmd, io.popen):gsub("[ \t\r\n]", "")
-			local flag = nmd5 == md5 and "ok" or "fail"
-			error("restore %s %s", flag, path)
-			change = true
+			upgrading_exit()
+			if md5 ~= cmd5 then
+				error("ERROR backup. remove %s %s %s", md5, cmd5, backup_path)
+				os.remove(backup_path)
+				cm.set(path, nil)
+				cm.save()
+			else
+				local cmd = string.format("cp %s %s; md5sum %s | awk '{print $1}'", backup_path, path, path)
+				local nmd5 = read(cmd, io.popen):gsub("[ \t\r\n]", "")
+				local flag = nmd5 == md5 and "ok" or "fail"
+				error("restore %s %s", flag, path)
+				change = true
+			end
 		end
 	end
 
