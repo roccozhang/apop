@@ -1,6 +1,6 @@
 # point it to where the compiler can find the Lua header files (lua.h, etc.)
 # LUADIR = ../lua
-LUADIR = /usr/include/lua5.1/
+LUADIR = $(LUA_INC)
 
 # define your own "large" integer type; not defining a proper type
 # will default to 'long', which may cause problems with 'size_t'
