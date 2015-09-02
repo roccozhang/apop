@@ -1,7 +1,7 @@
 local lfs = require("lfs")
 local js = require("cjson.safe")
 
-local md5path = "/backup/md5.json"
+local md5path = "/tmp/backup/md5.json"
 local map = {}
 
 local function read(path, func)
