@@ -5,7 +5,7 @@ local libmd5 = require("md5")
 local cm = require("cfgmd5")
 local js = require("cjson.safe")
 
-local backup_root = "/backup/root"
+local backup_root = "/tmp/backup/root"
 local upgrade_flag = "/tmp/sysupgrade"
 local last_map = {}
 

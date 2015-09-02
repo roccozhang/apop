@@ -1,5 +1,5 @@
 #!/bin/sh
-BACKUP_DIR=/backup
+BACKUP_DIR=/tmp/backup
 BACKUP_PART=7
 LOG_DIR=/ugw/log
 LOGFILE=$LOG_DIR/init_backup.log
@@ -10,7 +10,7 @@ log() {
 }
 
 mount_backup() {
-	test -d $BACKUP_DIR || mkdir $BACKUP_DIR
+	test -d $BACKUP_DIR || mkdir -p $BACKUP_DIR
 	mount -t jffs2 /dev/mtdblock${BACKUP_PART} $BACKUP_DIR
 	if [ $? -ne 0 ]; then 
 		log "mount $BACKUP_DIR fail, re-format" 
@@ -29,6 +29,14 @@ mount_backup() {
 	if [ $? -ne 0 ]; then 
 		log "mount $BACKUP_DIR fail, ERROR" 
 		return
+	fi
+
+	mount | grep mtdblock${BACKUP_PART} | grep backup >/dev/null 2>&1
+	if [ $? -ne 0 ]; then 
+		log "format and mount fail" 
+		sleep 5
+		reboot 
+		exit 1
 	fi
 
 	log "format and mount ok" 
