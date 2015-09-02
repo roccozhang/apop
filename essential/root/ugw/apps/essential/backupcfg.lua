@@ -22,7 +22,7 @@ end
 
 local function error(fmt, ...)
 	local s = string.format("e %s " .. fmt, os.date("%m%d %H%M%S"), ...) 
-	local cmd = string.format("echo '%s' >> /backup/essential.log", s)
+	local cmd = string.format("echo '%s' >> /tmp/backup/essential.log", s)
 	os.execute(cmd)
 	print(s)
 end 

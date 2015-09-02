@@ -14,7 +14,7 @@ local function read(path, func)
 end
 
 local function clear_log()
-	local path = "/backup/essential.log"
+	local path = "/tmp/backup/essential.log"
 	local n = tonumber(read(string.format("wc -l %s | awk '{print $1}'", path), io.popen)) or 0
 
 	local max = 2000
