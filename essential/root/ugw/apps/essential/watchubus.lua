@@ -1,6 +1,7 @@
 local se = require("se")
 local lfs = require("lfs")
 local ubus = require("ubus")
+local summary = require("summary")
 
 local upgrade_flag = "/tmp/sysupgrade"
 
@@ -46,6 +47,9 @@ local function main()
 				error("upgrading, skip check ubusd")
 				local _ = se.sleep(5), os.exit(0)
 			end
+
+			summary.report_now("ubusd dead at " .. (read("uptime", io.popen) or ""))
+
 			error("ubusd dead, reboot")
 			error("%s", read("ls /tmp", io.popen))
 			os.execute("sleep 5; reboot")
@@ -57,6 +61,7 @@ end
 
 local function run()
 	se.go(main)
+	print("ubusd dead at " .. (read("uptime", io.popen) or ""))
 end
 
 return {run = run}

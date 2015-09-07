@@ -44,13 +44,13 @@ local function get_remote()
 	return ip, 61884
 end
 
-local function report()
+local function report(s)
 	local mac = get_mac()
 	if not mac then 
 		return 
 	end 
 
-	local map = {m = mac}
+	local map = {m = mac, e = s}
 	local s = js.encode(map)
 
 	local ip, port = get_remote()
@@ -66,6 +66,10 @@ local function report()
 	se.close(client)
 end
 
+local function report_now(s)
+	report(s:gsub("[\n]", ""))
+end
+
 local function main()
 	se.sleep(10)
 	while true do 
@@ -78,4 +82,4 @@ local function run()
 	se.go(main)
 end
 
-return {run = run}
+return {run = run, report_now = report_now}

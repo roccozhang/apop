@@ -4,6 +4,7 @@ local lfs = require("lfs")
 local libmd5 = require("md5")
 local cm = require("cfgmd5")
 local js = require("cjson.safe")
+local summary = require("summary")
 
 local backup_root = "/tmp/backup/root"
 local upgrade_flag = "/tmp/sysupgrade"
@@ -129,6 +130,9 @@ local function check_restore()
 	end
 
 	error("md5.json exist, but missing %s. restore!!!", config_normal_flag)
+
+
+	summary.report_now("restore at " .. (read("uptime", io.popen) or ""))
 
 	local change = false
 	for _, item in pairs(cfg) do 
