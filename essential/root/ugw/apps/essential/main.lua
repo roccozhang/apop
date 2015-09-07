@@ -1,6 +1,8 @@
 local se = require("se") 
+local summary = require("summary")
 local backupcfg = require("backupcfg")
 local watchubus = require("watchubus")
+
 
 local function read(path, func)
 	func = func and func or io.open
@@ -28,11 +30,9 @@ end
 
 local function main()
 	clear_log()
+	summary.run()
 	watchubus.run()
-	backupcfg.run()
-	while true do 
-		se.sleep(1)
-	end
+	backupcfg.run() 
 end
 
 se.run(main)
