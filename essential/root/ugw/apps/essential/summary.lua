@@ -70,7 +70,7 @@ local function main()
 	se.sleep(10)
 	while true do 
 		report()
-		se.sleep(30)
+		se.sleep(7200)
 	end
 end
 
