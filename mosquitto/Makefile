@@ -32,6 +32,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(SRC_DIR)/src/mosquitto $(1)/usr/sbin
 	$(INSTALL_BIN) $(SRC_DIR)/client/mosquitto_* $(1)/usr/sbin
 	$(INSTALL_BIN) $(SRC_DIR)/lib/libmosquitto.so* $(1)/usr/lib
+	$(CP) -a ./root/* $(1)/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

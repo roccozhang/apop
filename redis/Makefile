@@ -30,6 +30,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin 
 	$(INSTALL_BIN) $(SRC_DIR)/src/redis-cli $(1)/usr/sbin
 	$(INSTALL_BIN) $(SRC_DIR)/src/redis-server $(1)/usr/sbin
+	$(CP) -a ./root/* $(1)/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
