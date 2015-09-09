@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=mosquitto
+PKG_NAME:=mosquitto3
 PKG_VERSION:=0.2
 PKG_RELEASE:=1
 
@@ -15,11 +15,11 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
-	TITLE:=mosquitto
+	TITLE:=mosquitto3
 endef
 
 define Package/$(PKG_NAME)/description
-	mosquitto
+	mosquitto3
 endef
 
 define Build/Compile
