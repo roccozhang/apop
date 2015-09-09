@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common 
 
-START=93
+START=94
 
 USE_PROCD=1
 PROG=/ugw/script/websrv.sh 
@@ -19,4 +19,5 @@ reload_service() {
 
 stop_service() {
 	echo "stop websrv"
+	ps | grep websrv/main.lua | grep -v grep | awk '{print $1}' | xargs kill
 }

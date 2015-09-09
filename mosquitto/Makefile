@@ -9,7 +9,7 @@ PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-SRC_DIR=mosquitto-1.4.3
+SRC_DIR=mosquitto-1.4.2
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
