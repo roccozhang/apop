@@ -127,7 +127,7 @@ error_ret:
 }
 
 static int ev_handler(struct mg_connection *conn, enum mg_event ev) {
-	if (!(conn && conn->uri) || strncmp(conn->uri, "/cgi.", 5))
+	if (!(conn && conn->uri) || strncmp(conn->uri, "/c.", 3))
 		return MG_FALSE; 
 	lua_State *L = (lua_State *)conn->server_param;
 	lua_getfenv(L, 1);
@@ -330,6 +330,7 @@ static struct constant s_const[] = {
 	{"MG_AUTH", MG_AUTH},
 	{"MG_REQUEST", MG_REQUEST},
 	{"MG_REPLY", MG_REPLY},
+	{"MG_RECV", MG_RECV},
 	{"MG_CLOSE", MG_CLOSE},
 	{"MG_WS_HANDSHAKE", MG_WS_HANDSHAKE},
 	{"MG_WS_CONNECT", MG_WS_CONNECT},
