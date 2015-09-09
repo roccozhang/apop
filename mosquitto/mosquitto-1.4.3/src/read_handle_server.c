@@ -360,6 +360,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif /* REAL_WITH_TLS_PSK */
 	}else{
 #endif /* WITH_TLS */
+		username_flag = 1;
+		if (!username) 
+			username = strdup("");
+		if (!password) 
+			password = strdup("");
+		
 		if(username_flag){
 			rc = mosquitto_unpwd_check(db, username, password);
 			switch(rc){

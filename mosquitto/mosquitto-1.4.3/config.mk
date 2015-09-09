@@ -21,12 +21,12 @@
 # Disabling this will also mean that passwords must be stored in plain text. It
 # is strongly recommended that you only disable WITH_TLS if you are not using
 # password authentication at all.
-WITH_TLS:=yes
+WITH_TLS:=no
 
 # Comment out to disable TLS/PSK support in the broker and client. Requires
 # WITH_TLS=yes.
 # This must be disabled if using openssl < 1.0.
-WITH_TLS_PSK:=yes
+WITH_TLS_PSK:=no
 
 # Comment out to disable client client threading support.
 WITH_THREADING:=yes
@@ -35,13 +35,13 @@ WITH_THREADING:=yes
 # to connect to other brokers and subscribe/publish to topics. You probably
 # want to leave this included unless you want to save a very small amount of
 # memory size and CPU time.
-WITH_BRIDGE:=yes
+WITH_BRIDGE:=no
 
 # Comment out to remove persistent database support from the broker. This
 # allows the broker to store retained messages and durable subscriptions to a
 # file periodically and on shutdown. This is usually desirable (and is
 # suggested by the MQTT spec), but it can be disabled if required.
-WITH_PERSISTENCE:=yes
+WITH_PERSISTENCE:=no
 
 # Comment out to remove memory tracking support from the broker. If disabled,
 # mosquitto won't track heap memory usage nor export '$SYS/broker/heap/current
@@ -58,23 +58,23 @@ WITH_MEMORY_TRACKING:=yes
 WITH_SYS_TREE:=yes
 
 # Build with SRV lookup support.
-WITH_SRV:=yes
+WITH_SRV:=no
 
 # Build using libuuid for clientid generation (Linux only - please report if
 # supported on your platform).
-WITH_UUID:=yes
+WITH_UUID:=no
 
 # Build with websockets support on the broker.
 WITH_WEBSOCKETS:=no
 
 # Use elliptic keys in broker
-WITH_EC:=yes
+WITH_EC:=no
 
 # Build man page documentation by default.
-WITH_DOCS:=yes
+WITH_DOCS:=no
 
 # Build with client support for SOCK5 proxy.
-WITH_SOCKS:=yes
+WITH_SOCKS:=no
 
 # =============================================================================
 # End of user configuration

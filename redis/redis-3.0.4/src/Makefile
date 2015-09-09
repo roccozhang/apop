@@ -27,7 +27,7 @@ INSTALL_BIN=$(PREFIX)/bin
 INSTALL=install
 
 # Default allocator
-ifeq ($(uname_S),Linux)
+ifeq ($(uname_S),Linuxx)
 	MALLOC=jemalloc
 else
 	MALLOC=libc
@@ -88,11 +88,11 @@ ifeq ($(MALLOC),tcmalloc_minimal)
 	FINAL_LIBS+= -ltcmalloc_minimal
 endif
 
-ifeq ($(MALLOC),jemalloc)
-	DEPENDENCY_TARGETS+= jemalloc
-	FINAL_CFLAGS+= -DUSE_JEMALLOC -I../deps/jemalloc/include
-	FINAL_LIBS+= ../deps/jemalloc/lib/libjemalloc.a -ldl
-endif
+#ifeq ($(MALLOC),jemalloc)
+#	DEPENDENCY_TARGETS+= jemalloc
+#	FINAL_CFLAGS+= -DUSE_JEMALLOC -I../deps/jemalloc/include
+#	FINAL_LIBS+= ../deps/jemalloc/lib/libjemalloc.a -ldl
+#endif
 
 REDIS_CC=$(QUIET_CC)$(CC) $(FINAL_CFLAGS)
 REDIS_LD=$(QUIET_LINK)$(CC) $(FINAL_LDFLAGS)
