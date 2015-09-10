@@ -67,11 +67,17 @@ uri_map["/c.login"] = function(conn)
 	end
 
 	local map = {
-		cmd = "auth",
+		mod = websrv_module,
 		seq = conn:addr(),
-		username = username,
-		password = password,
-		ip = conn:remote_ip(),
+
+		pld = {
+			cmd = "auth",
+			data = {
+				username = username,
+				password = password,
+				ip = conn:remote_ip(),
+			}
+		},
 	}
 
 	send_request(map)
@@ -151,11 +157,11 @@ end
 
 local function on_message(mid, topic, data, qos, retain)
 	local map = js.decode(data)
-	if not (map and map.seq and map.r) then 
+	if not (map and map.seq and map.pld) then 
 		return 
-	end 
+	end
 
-	resins:set_field(map.seq, "r", map.r)
+	resins:set_field(map.seq, "r", map.pld)
 end
 
 local function create_mqtt()
