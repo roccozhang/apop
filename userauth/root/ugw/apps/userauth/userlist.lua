@@ -12,16 +12,17 @@ function method.add(ins, user)
 	if ins:exist(name) then 
 		return false 
 	end 
-	ins.usermap[name] = user
+	ins.usermap[name], ins.change = user, true
 	return true
 end
 
 function method.del(ins, user)	
 	ins.usermap[type(user) == "string" and user or user:get_name()] = nil
+	ins.change = true
 end
 
 function method.set(ins, user)
-	ins.usermap[user:get_name()] = user
+	ins.usermap[user:get_name()], ins.change = user, true
 end
 
 function method.get(ins, user)
@@ -46,6 +47,10 @@ function method.load(ins)
 end
 
 function method.save(ins)
+	if not ins.change then 
+		return
+	end 
+	ins.change = false
 	local s = js.encode(ins.usermap)
 	local tmp = ins.path .. ".tmp"
 	local _ = write(tmp, s) or error("save fail")
@@ -53,6 +58,7 @@ function method.save(ins)
 end
 
 function method.show(ins)
+	print("----------show userlist")
 	for k, v in pairs(ins.usermap) do 
 		print(k, js.encode(v))
 	end
@@ -68,11 +74,16 @@ function method.filter(ins, match)
 	return res
 end
 
+function method.set_change(ins, b)
+	ins.change = b 
+end
+
 local function new(path)
 	assert(path)
 	local obj = {
 		path = path,
 		usermap = {},
+		change = false,
 	}
 	setmetatable(obj, mt)
 	return obj
@@ -83,5 +94,5 @@ g_ins:load()
 local function ins()
 	return g_ins
 end
-
+-- print(js.encode(usr.new()))
 return {ins = ins}

@@ -30,6 +30,10 @@ function method.add(ins, mac, ip, name)
 	user:show()
 end
 
+function method.del(ins, mac)
+	ins.usermap[mac], ins.change = nil, true
+end
+
 function method.load(ins)
 	-- TODO check path exist
 	local s = read(ins.path)
@@ -51,6 +55,7 @@ function method.save(ins)
 end
 
 function method.show(ins)
+	print("----------show online")
 	for k, v in pairs(ins.usermap) do 
 		print(k, js.encode(v))
 	end
@@ -60,6 +65,10 @@ function method.foreach(ins, cb)
 	for _, user in pairs(ins.usermap) do 
 		cb(user)
 	end 
+end
+
+function method.set_change(ins, b)
+	ins.change = b
 end
 
 local function new(path)

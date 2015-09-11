@@ -2,6 +2,7 @@ local util = require("myutil")
 local policy = require("policy")
 local js = require("cjson.safe")
 
+
 local read, write = util.read, util.write 
 
 local method = {}
@@ -109,6 +110,16 @@ function method.show(ins)
 	end
 end
 
+function method.check_auto(ins, ip)
+	for _, pol in ipairs(ins.polarr) do 
+		if pol:in_range(ip) then 
+			return pol:get_type() == policy.AUTO
+		end
+	end
+	print("logical error")
+	return true
+end
+
 local function new(path)
 	assert(path)
 	local obj = {
@@ -119,4 +130,15 @@ local function new(path)
 	return obj
 end 
 
-return {new = new}
+local g_ins
+local function ins()
+	return g_ins
+end 
+
+g_ins = new("policy.json")
+g_ins:load()
+
+return {
+	new = new,	
+	ins = ins, 
+}

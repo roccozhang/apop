@@ -5,6 +5,7 @@ local fields = {
 	ip = "",
 	name = "",
 	elapse = 0,
+	part = 0,
 }
 
 local new, setmeta, method = expand.expand(fields)

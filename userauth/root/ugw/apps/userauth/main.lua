@@ -13,8 +13,7 @@ local cmd_map = {
 	auth = dispatcher.auth,
 }
 
-local function on_message(mid, topic, data, qos, retain)   
-	-- print(data)
+local function on_message(mid, topic, data, qos, retain)
 	local map = js.decode(data)
 	if not (map and map.pld) then 
 		print("invalid data", data)
@@ -41,14 +40,6 @@ end
 
 local function timeout_save()
 	-- print("save")
-end
-
-local function update_online_user()
-	dispatcher.update_elapse()
-end
-
-local function update_remain() 
-	dispatcher.update_remain()
 end
 
 local function set_timeout(timeout, cb)
@@ -79,9 +70,9 @@ local function main()
 	local step = 10
 
 	local timeout_arr = {
-		-- set_timeout(3, timeout_save),
-		set_timeout(1, update_remain),
-		-- set_timeout(5, update_online_user),
+		-- set_timeout(3, timeout_save), 
+		set_timeout(6, dispatcher.update_user),
+		set_timeout(3, dispatcher.update_online),
 	}
 
 	while true do
