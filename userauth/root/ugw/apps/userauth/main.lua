@@ -11,6 +11,16 @@ end
 
 local cmd_map = {
 	auth = dispatcher.auth,
+
+	user_set = dispatcher.user_set,
+	user_del = dispatcher.user_del,
+	user_add = dispatcher.user_add,
+	
+	policy_set = dispatcher.policy_set,
+	policy_add = dispatcher.policy_add,
+	policy_del = dispatcher.policy_del,
+
+	online_del = dispatcher.online_del,
 }
 
 local function on_message(mid, topic, data, qos, retain)
@@ -21,6 +31,7 @@ local function on_message(mid, topic, data, qos, retain)
 	end
 
 	local cmd = map.pld
+	cmd.cmd = "user_set"
 	local func = cmd_map[cmd.cmd]
 	if not func then 
 		print("invalid data", data)

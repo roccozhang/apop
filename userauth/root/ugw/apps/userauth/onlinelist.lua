@@ -30,8 +30,20 @@ function method.add(ins, mac, ip, name)
 	user:show()
 end
 
-function method.del(ins, mac)
-	ins.usermap[mac], ins.change = nil, true
+function method.del_mac(ins, mac)
+	if ins.usermap[mac] then 
+		ins.usermap[mac], ins.change = nil, true
+	end
+end
+
+function method.del_user(ins, name)
+	local del = {}
+	for _, user in pairs(ins.usermap) do 
+		local _ = user:get_name() == name and table.insert(del, user:get_mac())
+	end 
+	for _, mac in ipairs(del) do 
+		ins.usermap[mac], ins.change = nil, true
+	end
 end
 
 function method.load(ins)

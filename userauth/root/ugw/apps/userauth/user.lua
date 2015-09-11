@@ -6,8 +6,7 @@ local BIND_MAC = "mac"
 local fields = {
 	name = "",
 	pwd = "",
-	desc = "",
-	mac = "",
+	desc = "", 
 
 	enable = 1,
 	multi = 0,
@@ -34,7 +33,7 @@ function method.set_remain(ins, enable, left)
 end
 
 function method.check_mac(ins, mac) 
-	if ins:get_bind() == BIND_NONE then 
+	if ins:get_bind() == BIND_NONE then
 		return true 
 	end 
 
@@ -49,7 +48,6 @@ end
 
 function method.check_expire(ins)
 	local expire = ins:get_expire()
-	print(expire[2], get_timestamp(), expire[2] < get_timestamp())
 	if expire[1] == 1 and expire[2] < get_timestamp() then
 		return false
 	end

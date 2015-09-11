@@ -3,6 +3,7 @@ local expand = require("expand")
 local fields = {
 	mac = "", 		-- key 
 	ip = "",
+	mac = "",
 	name = "",
 	elapse = 0,
 	part = 0,

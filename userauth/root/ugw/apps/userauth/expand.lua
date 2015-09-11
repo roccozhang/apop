@@ -10,6 +10,7 @@ local function expand(fields)
 	for k in pairs(fields) do 
 		method["set_" .. k] = function(ins, v)
 			ins[k] = v
+			return ins
 		end
 
 		method["get_" .. k] = function(ins)

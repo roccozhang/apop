@@ -82,15 +82,7 @@ local function setup_update_online()
 end
 
 local function kick_online_user(username)
-	local del = {}
-	local ol = onlinelist.ins()
-	ol:foreach(function(user)
-		local _ = user:get_name() == username and table.insert(del, user:get_mac())
-	end)
-	for _, mac in ipairs(del) do 
-		log.info("kick %s %s", username, mac)
-		ol:del(mac)
-	end
+	onlinelist.ins():del_user(username)
 end
 
 local function scan_expire()
@@ -101,7 +93,7 @@ local function scan_expire()
 		local u = ul:get(name)
 		if not u:check_expire() then 
 			expired_map[name] = 1 
-		end 
+		end
 	end)
 
 	for username in pairs(expired_map) do 
@@ -132,15 +124,102 @@ end
 
 local function update_user() 
 	scan_remain()
-	scan_expire()
-
-	local ol, ul = onlinelist.ins(), userlist.ins()
-	ul:show()
-	ol:show()
+	scan_expire() 
 end
+
+local function user_set(map)  
+	local ul = userlist.ins() 
+	for name, item in pairs(map) do 
+		if not ul:exist(name) then 
+			return "404 miss " .. name 
+		end 
+		if name ~= item.name and ul:exist(item.name) then 
+			return "404 dup " .. item.name 
+		end
+	end
+
+	for name, item in pairs(map) do 
+		local name, pwd, desc, enable, multi, bind, maclist = item.name, item.pwd, item.desc, item.enable, item.multi, item.bind, item.maclist
+		local expire_enable, expire_timestamp = item.expire_enable, item.expire_timestamp
+		local remain_enable, remaining = item.remain_enable, item.remaining
+
+		assert(name and pwd and desc and enable and multi and bind and maclist and expire_enable and expire_timestamp and remain_enable and remaining)
+
+		local n = usr:new()
+		n:set_name(name):set_pwd(pwd):set_desc(desc):set_enable(enable):set_multi(multi)
+		n:set_bind(bind):set_maclist(maclist)
+		n:set_expire(expire_enable, expire_timestamp):set_remain(remain_enable, remaining)
+
+		ul:set(name, n)
+	end
+
+	return "202 set user ok"
+end 
+
+local function user_del(arr) 
+	local ol, ul = onlinelist.ins(), userlist.ins()
+	for _, name in ipairs(arr) do 
+		local _ = ul:del(name), ol:del_user(name)
+	end 
+
+	return "202 del users ok"
+end
+
+local function user_add(arr) 
+	local ul = userlist.ins()
+	for _, map in ipairs(arr) do 
+		if ul:exist(map.name) then 
+			return "404 dup " .. map.name
+		end
+	end
+
+	for _, map in ipairs(arr) do 
+		local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
+		local expire_enable, expire_timestamp = map.expire_enable, map.expire_timestamp
+		local remain_enable, remaining = map.remain_enable, map.remaining
+
+		assert(name and pwd and desc and enable and multi and bind and maclist and expire_enable and expire_timestamp and remain_enable and remaining)
+
+		local n = usr:new()
+		n:set_name(name):set_pwd(pwd):set_desc(desc):set_enable(enable)
+		n:set_multi(multi):set_bind(bind):set_maclist(maclist)
+		n:set_expire(expire_enable, expire_timestamp):set_remain(remain_enable, remaining)
+
+		ul:add(n)
+	end
+
+	return "202 add new user ok"
+end
+
+local function policy_set(data)
+	log.error("not implement %s", js.encode(data))
+end 
+
+local function policy_add(data) 
+	log.error("not implement %s", js.encode(data))
+end 
+
+local function policy_del(arr) 
+	log.error("not implement %s", js.encode(data))
+end
+
+local function online_del(data) 
+	log.error("not implement %s", js.encode(data))
+end 
 
 return {
 	auth = auth, 
+	
 	update_user = update_user,
 	update_online = setup_update_online(), 
+
+	user_set = user_set,
+	user_del = user_del,
+	user_add = user_add,
+
+	policy_set = policy_set,
+	policy_add = policy_add,
+	policy_del = policy_del,
+
+	online_del = online_del,
 }

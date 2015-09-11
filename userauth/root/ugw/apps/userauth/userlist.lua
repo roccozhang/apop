@@ -21,8 +21,11 @@ function method.del(ins, user)
 	ins.change = true
 end
 
-function method.set(ins, user)
-	ins.usermap[user:get_name()], ins.change = user, true
+function method.set(ins, name, user)
+	if not ins.usermap[name] then 
+		return 
+	end
+	ins.usermap[name], ins.change = user, true
 end
 
 function method.get(ins, user)
@@ -94,5 +97,8 @@ g_ins:load()
 local function ins()
 	return g_ins
 end
--- print(js.encode(usr.new()))
+
+
+
+
 return {ins = ins}
