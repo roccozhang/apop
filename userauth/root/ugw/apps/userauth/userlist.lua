@@ -92,13 +92,10 @@ local function new(path)
 	return obj
 end 
 
-local g_ins = new("user.json")
+local g_ins = new("/etc/config/user.json")
 g_ins:load()
 local function ins()
 	return g_ins
 end
-
-
-
 
 return {ins = ins}

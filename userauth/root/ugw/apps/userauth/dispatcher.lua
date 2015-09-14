@@ -6,6 +6,10 @@ local onlinelist = require("onlinelist")
 local policy = require("policy")
 local policies = require("policies")
 
+local function status(msg, ok)
+	return (ok and "302 " or "404 ") .. msg
+end
+
 local function get_timestamp()
 	return  os.date("%Y%m%d %H%M%S") 
 end
@@ -20,49 +24,49 @@ end
 local function auth(map)
 	local username, password, ip, mac = map.username, map.password, map.ip, map.mac or "00:00:00:00:00:ae"
 	if not (username and password and ip and mac) then 
-		return "404 missing login param"
+		return status("missing login param")
 	end 
 
 	local ol = onlinelist.ins()
 	if ol:exist_mac(mac) then 
-		return "202 already online"
+		return status("already online", true)
 	end
 
 	local ul = userlist.ins()
 	local user = ul:get(username)
 	if not user then 
-		return "404 user not exist"
+		return status("user not exist")
 	end
 
 	if 0 == user:get_enable() then
-		return "404 user disabled"
+		return status("user disabled")
 	end
 
 	if not user:check_expire() then 
-		return "404 expired"
-	end 
+		return status("expired")
+	end
 
 	if not user:check_remain() then 
-		return "404 no remaining"
+		return status("no remaining")
 	end 
 
 	local is_auto = policies:ins():check_auto(ip)
 	local _ = is_auto and print("why auto", ip)
 	if not (is_auto or user:check_user_passwd(username, password)) then  
-		return "404 invalid username/password"
+		return status("invalid username/password")
 	end 
 
 	if not user:check_multi() then
-		return "404 multi disabled"
+		return status("multi disabled")
 	end
 
 	if not user:check_mac(mac) then 
-		return "404 mac disabled"
+		return status("mac disabled")
 	end
 
 	login_success(mac, ip, username)
 
-	return "404 ok"
+	return status("ok", true)
 end
 
 local function setup_update_online()
@@ -91,7 +95,7 @@ local function scan_expire()
 	ol:foreach(function(user) 
 		local name = user:get_name()
 		local u = ul:get(name)
-		if not u:check_expire() then 
+		if not u:check_expire() then
 			expired_map[name] = 1 
 		end
 	end)
@@ -129,12 +133,17 @@ end
 
 local function user_set(map)  
 	local ul = userlist.ins() 
-	for name, item in pairs(map) do 
+	for name, item in pairs(map) do
+		local ret, err = usr.check(map) 
+		if not ret then 
+			return status(err)
+		end 
+
 		if not ul:exist(name) then 
-			return "404 miss " .. name 
+			return status("miss " .. name)
 		end 
 		if name ~= item.name and ul:exist(item.name) then 
-			return "404 dup " .. item.name 
+			return status("dup " .. item.name)
 		end
 	end
 
@@ -153,7 +162,7 @@ local function user_set(map)
 		ul:set(name, n)
 	end
 
-	return "202 set user ok"
+	return status("set user ok")
 end 
 
 local function user_del(arr) 
@@ -162,14 +171,18 @@ local function user_del(arr)
 		local _ = ul:del(name), ol:del_user(name)
 	end 
 
-	return "202 del users ok"
+	return status("del users ok", true)
 end
 
 local function user_add(arr) 
 	local ul = userlist.ins()
 	for _, map in ipairs(arr) do 
+		local ret, err = usr.check(map) 
+		if not ret then 
+			return status(err)
+		end 
 		if ul:exist(map.name) then 
-			return "404 dup " .. map.name
+			return status("dup " .. map.name)
 		end
 	end
 
@@ -188,26 +201,101 @@ local function user_add(arr)
 		ul:add(n)
 	end
 
-	return "202 add new user ok"
+	return status("add new user ok", true)
 end
 
-local function policy_set(data)
-	log.error("not implement %s", js.encode(data))
+local function policy_set(map)
+	-- local map = {["hello"] = {name = "hello", ip1 = "192.162.0.1", ip2 = "192.168.0.255", type = "auto"}}
+	local pols = policies.ins()
+	for name, item in pairs(map) do 
+		local ret, err = policy.check(map)
+		if not ret then 
+			return status(err)
+		end 
+
+		if not pols:exist(name) then 
+			return status("miss " .. name)
+		end 
+		
+		if name ~= item.name and pols:exist(item.name) then 
+			return status("dup " .. item.name)
+		end
+	end
+
+	for name, item in pairs(map) do
+		local name, ip1, ip2, tp = item.name, item.ip1, item.ip2, item.type 
+		assert(name and ip1 and ip2 and tp)
+
+		local n = policy.new()
+		n:set_name(name):set_ip1(ip1):set_ip2(ip2):set_type(tp) 
+		pols:set(name, n)
+	end
+
+	return status("set policy ok", true)
 end 
 
-local function policy_add(data) 
-	log.error("not implement %s", js.encode(data))
+local function policy_add(map) 
+	-- local map = {name = "pol1", ip1 = "192.168.0.1", ip2 = "192.168.0.255", type = "auto"}
+	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
+	local ret, err = policy.check(map)
+	if not ret then 
+		return status(err)
+	end 
+
+	local pols = policies.ins()
+	if pols:exist(name) then 
+		return status("dup " .. name)
+	end
+
+	local n = policy.new()
+	n:set_name(name):set_ip1(ip1):set_ip2(ip2):set_type(tp)
+	pols:add(n)
+
+	return status("add new policy ok")
 end 
 
 local function policy_del(arr) 
-	log.error("not implement %s", js.encode(data))
+	-- local arr = {"hello", "worldc"}
+	local pols = policies.ins()
+	pols:show()	
+	for _, name in ipairs(arr) do 
+		pols:del(name)
+	end
+	pols:show()
+
+	return status("del users ok", true)
 end
 
-local function online_del(data) 
-	log.error("not implement %s", js.encode(data))
+local function policy_adj(arr) 
+	-- local arr = {"hello", "world", "default"}
+	local pols = policies.ins() 
+	for _, name in ipairs(arr) do 
+		if not pols:exist(name) then 
+			return "404 minss " .. name
+		end 
+	end
+
+	pols:adjust(arr)
+
+	return status("del users ok", true)
+end
+
+local function online_del(arr) 
+	local ol = onlinelist.ins()
+	for _, mac in ipairs(arr) do 
+		ol:del_mac(mac)
+	end
+
+	return status("del online ok", true)
 end 
 
+local function save()
+	local ol, ul = onlinelist.ins(), userlist.ins()
+	local _ = ol:save(), ul:save()
+end
+
 return {
+	save = save,
 	auth = auth, 
 	
 	update_user = update_user,
@@ -220,6 +308,7 @@ return {
 	policy_set = policy_set,
 	policy_add = policy_add,
 	policy_del = policy_del,
+	policy_adj = policy_adj,
 
 	online_del = online_del,
 }

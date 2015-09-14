@@ -59,10 +59,10 @@ function method.find(ins, name)
 	end 
 end
 
-function method.set(ins, pol)
-	local o, i = ins:find(pol:get_name())
+function method.set(ins, name, pol)
+	local o, i = ins:find(name)
 	if o then 
-		polarr[i] = pol
+		ins.polarr[i] = pol
 	end
 end
 
@@ -135,7 +135,7 @@ local function ins()
 	return g_ins
 end 
 
-g_ins = new("policy.json")
+g_ins = new("/etc/config/policy.json")
 g_ins:load()
 
 return {

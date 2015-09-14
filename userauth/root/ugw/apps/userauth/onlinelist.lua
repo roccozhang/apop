@@ -1,5 +1,6 @@
 local online = require("online")
 local util = require("myutil")
+local lfs = require("lfs")
 local js = require("cjson.safe")
 
 local read, write = util.read, util.write 
@@ -93,7 +94,8 @@ local function new(path)
 	return obj
 end
 
-local g_ins = new("online.json")
+local _ = lfs.attributes("/tmp/memfile/") or lfs.mkdir("/tmp/memfile/")
+local g_ins = new("/tmp/memfile/online.json")
 g_ins:load()
 
 local function ins()

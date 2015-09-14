@@ -19,6 +19,7 @@ local cmd_map = {
 	policy_set = dispatcher.policy_set,
 	policy_add = dispatcher.policy_add,
 	policy_del = dispatcher.policy_del,
+	policy_adj = dispatcher.policy_adj,
 
 	online_del = dispatcher.online_del,
 }
@@ -30,8 +31,7 @@ local function on_message(mid, topic, data, qos, retain)
 		return 
 	end
 
-	local cmd = map.pld
-	cmd.cmd = "user_set"
+	local cmd = map.pld 
 	local func = cmd_map[cmd.cmd]
 	if not func then 
 		print("invalid data", data)
@@ -50,7 +50,7 @@ local function subscribe()
 end
 
 local function timeout_save()
-	-- print("save")
+	dispatcher.save()
 end
 
 local function set_timeout(timeout, cb)
@@ -81,9 +81,9 @@ local function main()
 	local step = 10
 
 	local timeout_arr = {
-		-- set_timeout(3, timeout_save), 
-		set_timeout(6, dispatcher.update_user),
-		set_timeout(3, dispatcher.update_online),
+		set_timeout(10, timeout_save), 
+		set_timeout(120, dispatcher.update_user),
+		set_timeout(20, dispatcher.update_online),
 	}
 
 	while true do

@@ -97,10 +97,72 @@ function method.show(ins)
 	end 
 end
 
--- local ins = new()
--- ins:set_remain({1, 3600, "20150901 12:00:00"})
--- -- ins:show()
 
--- print(ins:check_remain())
+local function check(map)
+	local mac_part = "[0-9a-z]"
+	local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)
+	
+	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
+	local expire_enable, expire_timestamp = map.expire_enable, map.expire_timestamp
+	local remain_enable, remaining = map.remain_enable, map.remaining
 
-return {new = new, setmeta = setmeta, BIND_MAC = BIND_MAC, BIND_NONE = BIND_NONE}
+	if not (name and #name > 0 and #name <= 16) then 
+		return nil, "invalid name"
+	end 
+
+	if not (pwd and #pwd >= 4 and #pwd <= 16) then 
+		return nil, "invalid password"
+	end
+
+	if not desc then 
+		return nil, "invalid desc"
+	end 
+
+	if not (enable and (enable == 0 or enable == 1)) then 
+		return nil, "invalid enable"
+	end
+
+	if not (multi and (multi == 0 or multi == 1)) then 
+		return nil, "invalid multi"
+	end
+
+	if not (bind and (bind == "mac" or bind == "none")) then 
+		return nil, "invalid bind"
+	end
+
+	if not (maclist and type(maclist) == "table") then 
+		return nil, "invalid maclist"
+	end 
+
+	for _, mac in ipairs(maclist) do 
+		if not (mac and mac:find(mac_pattern)) then 
+			return nil, "invalid mac"
+		end
+	end
+
+	if not (expire_enable and (expire_enable == 0 or expire_enable == 1)) then 
+		return nil, "invalid expire_enable"
+	end
+
+	if not (expire_timestamp and expire_timestamp:find("%d%d%d%d%d%d%d%d %d%d%d%d%d%d")) then 
+		return nil, "invalid expire_timestamp"
+	end 
+
+	if not (remain_enable and (remain_enable == 0 or remain_enable == 1)) then 
+		return nil, "invalid remain_enable"
+	end
+
+	if not (remaining and remaining >= 0) then 
+		return nil, "invalid remaining"
+	end
+
+	return true
+end
+
+return {
+	new = new, 
+	check = check,
+	setmeta = setmeta, 
+	BIND_MAC = BIND_MAC, 
+	BIND_NONE = BIND_NONE,
+}
