@@ -266,7 +266,7 @@ local function policy_del(arr)
 	return status("del users ok", true)
 end
 
-local function policy_adj(arr) 
+local function policy_adj(arr)  
 	-- local arr = {"hello", "world", "default"}
 	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 

@@ -38,7 +38,32 @@ function login_action() {
 	var params = window.location.search,
 		username = $("#username").val(),
 		password = $("#password").val();
+	var sarr = window.location.search.substring(1).split("&");
+	var obj = {}
+	for (var i = 0; i < sarr.length; i++) {
+		var tokens = sarr[i].split("=");
+		if (tokens.length == 2) {
+			obj[tokens[0]] = tokens[1];
+		}
+	}
 	
+	if (!(obj.hasOwnProperty("mac") && obj.hasOwnProperty("ip"))) {
+		alert("非法参数！");
+		return;
+	}
+	
+	var mac = obj.mac;
+	var ip = obj.ip;
+	
+	var mac_reg = /^[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$/;
+	var ip_reg = /^[1-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/
+	if (!(mac_reg.test(mac) && ip_reg.test(ip))) {
+		alert("非法参数！");
+		return;
+	}
+	username = "username";
+	password = "password";
+	// TODO check username and password
 	if (username == "" || password == "") {
 		alert("请输入帐号或密码！");
 		return;
@@ -48,7 +73,9 @@ function login_action() {
 		"/c.login" + params,
 		{
 			username: username,
-			password: password
+			password: password,
+			mac: mac, 
+			ip: ip,
 		},
 		function(d) {
 			var data = $.trim(d),
@@ -57,7 +84,8 @@ function login_action() {
 			if (parseInt(sta) === 302) {
 				window.location.href = g_redirect;
 			} else {
-				alert("登录失败！");
+				//alert("登录失败！");
+				console.log("登录失败！" + data);
 			}
 		}
 	)
@@ -67,7 +95,7 @@ function login_action() {
 
 <body>
 <header class="p-header" id="p-header">
-	<div class="title">全民尚网</div>
+	<div class="title">全民尚网</div> 
 </header>
 <div class="big">
 	<!-- Basic  -->

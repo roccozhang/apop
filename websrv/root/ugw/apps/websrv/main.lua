@@ -12,6 +12,8 @@ local MG_REQUEST = mongoose.MG_REQUEST
 local MG_CLOSE = mongoose.MG_CLOSE 
 local MG_POLL = mongoose.MG_POLL
 local MG_RECV = mongoose.MG_RECV
+local ip_pattern = "^[0-9]+%.[0-9]+%.[0-9]+%.[0-9]+$"
+local mac_pattern = "^[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]$"
 
 local resmap_mt = {}
 resmap_mt.__index = {
@@ -59,10 +61,26 @@ end
 
 local uri_map = {}
 uri_map["/c.login"] = function(conn)
+	local ip = conn:get("ip")
+	local mac = conn:get("mac")
 	local username = conn:get("username")
 	local password = conn:get("password")
 
-	if not (username and password) then
+	if not (username and password and ip and mac) then 
+		return false
+	end
+
+	if not (#username > 0 and #username <= 16 and #password >= 4 and #password <= 16) then  
+		return false 
+	end 
+
+	if not (mac:find(mac_pattern) and ip:find(ip_pattern)) then  
+		return false 	
+	end 
+
+	local remote_ip = conn:remote_ip()
+	if remote_ip ~= ip then 
+		print("ip not match", ip, remote_ip, mac, username)
 		return false
 	end
 
@@ -73,9 +91,10 @@ uri_map["/c.login"] = function(conn)
 		pld = {
 			cmd = "auth",
 			data = {
+				ip = ip,
+				mac = mac,
 				username = username,
 				password = password,
-				ip = conn:remote_ip(),
 			}
 		},
 	}
