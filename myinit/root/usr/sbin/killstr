@@ -1,0 +1,8 @@
+#!/bin/sh
+ps | grep $1 | grep -v -E "grep|killstr" | awk '{print $1}' | xargs kill >/dev/null 2>&1
+for i in 1 2 3; do 
+	ps | grep $1 | grep -v -E "grep|killstr" #>/dev/null 2>&1 
+	test $? -eq 0 || exit 0
+	sleep 1
+done
+ps | grep $1 | grep -v -E "grep|killstr" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
