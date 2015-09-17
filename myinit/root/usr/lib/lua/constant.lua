@@ -1,7 +1,3 @@
-local arch = require("arch")
--- 根据平台初始化配置文件目录
-local config_dir = arch.configdir()
-
 local keys = {
 	c_account = 			"APID#a#account",
 	c_ac_host = 			"APID#a#ac_host",
@@ -101,8 +97,7 @@ local keys = {
 local const = {
 	keys = 						keys,
 
-	ap_config = 				config_dir .. "/ap_config.json", 
-	default_config = 			arch.default_cfg(), 
+	default_config = 		"/etc/config/default_config.json", 
 }
 
 local function check_part(p)
