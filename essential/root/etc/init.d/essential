@@ -15,9 +15,10 @@ start_service() {
 
 reload_service() {
 	echo "restart essential"
-	
+	killstr essential/main.lua
 }
 
 stop_service() {
 	echo "stop essential"
+	killstr essential/main.lua
 }

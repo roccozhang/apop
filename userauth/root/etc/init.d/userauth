@@ -15,9 +15,10 @@ start_service() {
 
 reload_service() {
 	echo "restart userauth"
+	killstr userauth/main.lua
 }
 
 stop_service() {
-	echo "stop userauth"
-	ps | grep userauth/main.lua | grep -v grep | awk '{print $1}' | xargs kill
+	echo "stop userauth" 
+	killstr userauth/main.lua
 }
