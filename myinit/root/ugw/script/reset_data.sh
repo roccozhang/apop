@@ -1,5 +1,5 @@
 #!/bin/sh
-/ugw/script/kdog.sh watchdog
-/ugw/script/kdog.sh "essential/main.lua"
+/etc/init.d/essential stop
+killstr "essential/main.lua"
 rm -rf /tmp/backup/*
 sync 
