@@ -15,6 +15,7 @@ start_service() {
 
 reload_service() {
 	echo "restart essential"
+	
 }
 
 stop_service() {
