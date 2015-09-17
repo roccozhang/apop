@@ -54,6 +54,9 @@ local function report(s)
 	local s = js.encode(map)
 
 	local ip, port = get_remote()
+	if not ip then 
+		return 
+	end 
 	local addr = string.format("tcp://%s:%s", ip, port)
 
 	local client = se.connect(addr)
