@@ -11,6 +11,9 @@ local cfg = {
 	{	path = "/etc/config/uhttpd"	}, 
 	{	path = "/etc/config/network"	}, 
 	{	path = "/etc/tc.json"	}, 
+	{	path = "/etc/config/default/m.json"	}, 
+	{	path = "/etc/tc.json"	}, 
+	{	path = "/etc/tc.json"	}, 
 }
 
 return cfg

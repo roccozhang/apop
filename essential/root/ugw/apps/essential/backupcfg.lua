@@ -149,6 +149,8 @@ local function check_restore()
 				cm.set(path, nil)
 				cm.save()
 			else
+				local dir = path:match("(.+)/")
+				local _ = lfs.attributes(dir) or lfs.mkdir(dir)
 				local cmd = string.format("cp %s %s; md5sum %s | awk '{print $1}'", backup_path, path, path)
 				local nmd5 = read(cmd, io.popen):gsub("[ \t\r\n]", "")
 				local flag = nmd5 == md5 and "ok" or "fail"
