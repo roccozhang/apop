@@ -103,8 +103,7 @@ local function check(map)
 	local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)
 	
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
-	local expire_enable, expire_timestamp = map.expire_enable, map.expire_timestamp
-	local remain_enable, remaining = map.remain_enable, map.remaining
+	local expire, remain = map.expire, map.remain 
 
 	if not (name and #name > 0 and #name <= 16) then 
 		return nil, "invalid name"
@@ -114,7 +113,7 @@ local function check(map)
 		return nil, "invalid password"
 	end
 
-	if not desc then 
+	if not (desc and #desc < 16) then 
 		return nil, "invalid desc"
 	end 
 
@@ -140,20 +139,20 @@ local function check(map)
 		end
 	end
 
-	if not (expire_enable and (expire_enable == 0 or expire_enable == 1)) then 
-		return nil, "invalid expire_enable"
+	if not (expire and (expire[1] == 0 or expire[1] == 1)) then 
+		return nil, "invalid expire"
 	end
 
-	if not (expire_timestamp and expire_timestamp:find("%d%d%d%d%d%d%d%d %d%d%d%d%d%d")) then 
-		return nil, "invalid expire_timestamp"
+	if not (expire and expire[2]:find("%d%d%d%d%d%d%d%d %d%d%d%d%d%d")) then 
+		return nil, "invalid expire"
 	end 
 
-	if not (remain_enable and (remain_enable == 0 or remain_enable == 1)) then 
-		return nil, "invalid remain_enable"
+	if not (remain and (remain[1] == 0 or remain[1] == 1)) then 
+		return nil, "invalid remain"
 	end
 
-	if not (remaining and remaining >= 0) then 
-		return nil, "invalid remaining"
+	if not (remain and remain[2] >= 0) then 
+		return nil, "invalid remain"
 	end
 
 	return true

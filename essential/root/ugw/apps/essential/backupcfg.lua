@@ -126,7 +126,7 @@ local function check_restore()
 	end
 
 	if config_ok then
-		return 
+		return
 	end
 
 	error("md5.json exist, but missing %s. restore!!!", config_normal_flag)
@@ -184,7 +184,26 @@ local function loop_check_restore()
 	end
 end
 
+local function check_uptime()
+	local timeout = 300
+	while true do
+		if lfs.attributes(config_normal_flag) then 
+			print("find flag, start", config_normal_flag)
+			break 
+		end 
+
+		if se.time() > timeout then 
+			error("%ds had pass. but still missing %s", timeout, config_normal_flag)
+			break 
+		end
+
+		print("missing %s", config_normal_flag)
+		se.sleep(1)
+	end
+end
+
 local function run()
+	check_uptime()
 	check_restore()
 	se.go(main)
 	se.go(loop_check_restore)
