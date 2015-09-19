@@ -97,11 +97,9 @@ function method.show(ins)
 	end 
 end
 
-
+local mac_part = "[0-9a-z]"
+local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)	
 local function check(map)
-	local mac_part = "[0-9a-z]"
-	local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)
-	
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
 	local expire, remain = map.expire, map.remain 
 
