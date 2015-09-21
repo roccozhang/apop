@@ -67,6 +67,10 @@ function method.show(ins)
 	end
 end
 
+function method.data(ins)
+	return ins.usermap
+end
+
 function method.filter(ins, match)
 	local res = {}
 	for k, v in pairs(ins.usermap) do 

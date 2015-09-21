@@ -84,6 +84,10 @@ function method.set_change(ins, b)
 	ins.change = b
 end
 
+function method.data(ins)
+	return ins.usermap
+end
+
 local function new(path)
 	local obj = {
 		usermap = {}, 

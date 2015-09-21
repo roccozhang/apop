@@ -132,6 +132,7 @@ local function update_user()
 end
 
 local function user_set(map)  
+	local group, map = map.group, map.data 
 	local ul = userlist.ins() 
 	for name, item in pairs(map) do
 		local ret, err = usr.check(map) 
@@ -165,7 +166,8 @@ local function user_set(map)
 	return status("set user ok")
 end 
 
-local function user_del(arr) 
+local function user_del(map) 
+	local group, arr = map.group, map.data 
 	local ol, ul = onlinelist.ins(), userlist.ins()
 	for _, name in ipairs(arr) do 
 		local _ = ul:del(name), ol:del_user(name)
@@ -174,7 +176,8 @@ local function user_del(arr)
 	return status("del users ok", true)
 end
 
-local function user_add(arr) 
+local function user_add(map) 
+	local group, arr = map.group, map.data
 	local ul = userlist.ins()
 	for _, map in ipairs(arr) do 
 		local ret, err = usr.check(map) 
@@ -204,8 +207,13 @@ local function user_add(arr)
 	return status("add new user ok", true)
 end
 
+local function user_get(data)
+	return {status = 0, data = userlist.ins():data()}
+end
+
 local function policy_set(map)
 	-- local map = {["hello"] = {name = "hello", ip1 = "192.162.0.1", ip2 = "192.168.0.255", type = "auto"}}
+	local group, map = map.group, map.data
 	local pols = policies.ins()
 	for name, item in pairs(map) do 
 		local ret, err = policy.check(map)
@@ -236,6 +244,7 @@ end
 
 local function policy_add(map) 
 	-- local map = {name = "pol1", ip1 = "192.168.0.1", ip2 = "192.168.0.255", type = "auto"}
+	local group, map = map.group, map.data
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
 	local ret, err = policy.check(map)
 	if not ret then 
@@ -254,8 +263,9 @@ local function policy_add(map)
 	return status("add new policy ok")
 end 
 
-local function policy_del(arr) 
+local function policy_del(map) 
 	-- local arr = {"hello", "worldc"}
+	local group, arr = map.group, map.data
 	local pols = policies.ins()
 	pols:show()	
 	for _, name in ipairs(arr) do 
@@ -266,12 +276,14 @@ local function policy_del(arr)
 	return status("del users ok", true)
 end
 
-local function policy_adj(arr)  
+local function policy_adj(map)  
 	-- local arr = {"hello", "world", "default"}
+	print(js.encode(map))
+	local group, arr = map.group, map.data
 	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 
 		if not pols:exist(name) then 
-			return "404 minss " .. name
+			return "404 miss " .. name
 		end 
 	end
 
@@ -280,7 +292,25 @@ local function policy_adj(arr)
 	return status("del users ok", true)
 end
 
-local function online_del(arr) 
+local function policy_get(data)
+	-- local pol = policy.new()
+	-- pol:set_name("default"):set_ip1("0.0.0.0"):set_ip2("255.255.255.255"):set_type("auto")
+	-- policies.ins():add(pol) 
+
+	-- local pol = policy.new()
+	-- pol:set_name("pol1"):set_ip1("192.168.0.1"):set_ip2("192.168.0.255"):set_type("auto")
+	-- policies.ins():add(pol)
+
+	-- local pol = policy.new()
+	-- pol:set_name("pol2"):set_ip1("192.168.0.1"):set_ip2("192.168.0.255"):set_type("auto")
+	-- policies.ins():add(pol)
+	-- policies.ins():save()
+	return {status = 0, data = policies.ins():data()}
+end
+
+
+local function online_del(map) 
+	local group, arr = map.group, map.data
 	local ol = onlinelist.ins()
 	for _, mac in ipairs(arr) do 
 		ol:del_mac(mac)
@@ -288,6 +318,10 @@ local function online_del(arr)
 
 	return status("del online ok", true)
 end 
+
+local function online_get(data)
+	return {status = 0, data = onlinelist.ins():data()}
+end
 
 local function save()
 	local ol, ul = onlinelist.ins(), userlist.ins()
@@ -304,11 +338,14 @@ return {
 	user_set = user_set,
 	user_del = user_del,
 	user_add = user_add,
+	user_get = user_get,
 
 	policy_set = policy_set,
 	policy_add = policy_add,
 	policy_del = policy_del,
 	policy_adj = policy_adj,
+	policy_get = policy_get,
 
 	online_del = online_del,
+	online_get = online_get,
 }

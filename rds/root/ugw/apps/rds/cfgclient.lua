@@ -46,6 +46,10 @@ mt_ext.__index = {
 		return ins:request_common("a/ac/cfgmgr/modify", data)
 	end,
 
+	query_auth = function(ins, data)
+		return ins:request_common("a/ac/userauth", data)
+	end,
+
 	getlog = function(ins, apid)
 		assert(apid)
 

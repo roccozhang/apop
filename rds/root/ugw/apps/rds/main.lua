@@ -101,7 +101,7 @@ local function handle_client(cli)
 		return se.close(cli)
 	end
 
-	local total = struct.unpack("I", content)
+	local total = struct.unpack("<I", content)
 	if total > 1024 * 1024 * 10 then 
 		log.error("invalid content len %s", total)
 		return se.close(cli)
@@ -120,6 +120,7 @@ local function handle_client(cli)
 
 	local cmd = table.remove(t, 1)
 	local func = cmd_func[cmd]
+	print(data, func, cmd, cmd_func[cmd], auth.policyget)
 	if not func then
 		result = string.format("not find %s", cmd)
 		log.error("error cmd %s", result)
@@ -130,7 +131,7 @@ local function handle_client(cli)
 		result = type(result) == "string" and result or js.encode(result)
 	end
 
-	local data = struct.pack("I", #result) .. result
+	local data = struct.pack("<I", #result) .. result
 	local err = se.write(cli, data)
 	local _ = err and log.error("send len %s fail %s", #data, err) 
 	se.close(cli) 
@@ -156,6 +157,14 @@ local function main()
 
 	local srv, err = se.listen(tcp_addr) 
 	local _ = srv or log.fatal("listen %s fail %s", tcp_addr, err)
+
+	-- se.go(function()
+	-- 	se.sleep(1)
+	-- 	while true do 
+	-- 		auth.policyget({rds = "xx", pcli = pcli}, "default", "xxx")
+	-- 		se.sleep(3)
+	-- 	end
+	-- end)
 
 	while true do
 		local cli, err = se.accept(srv, 1)

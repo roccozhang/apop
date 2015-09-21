@@ -15,26 +15,29 @@ local cmd_map = {
 	user_set = dispatcher.user_set,
 	user_del = dispatcher.user_del,
 	user_add = dispatcher.user_add,
+	user_get = dispatcher.user_get,
 	
 	policy_set = dispatcher.policy_set,
 	policy_add = dispatcher.policy_add,
 	policy_del = dispatcher.policy_del,
 	policy_adj = dispatcher.policy_adj,
+	policy_get = dispatcher.policy_get,
 
 	online_del = dispatcher.online_del,
+	online_get = dispatcher.online_get,
 }
 
 local function on_message(mid, topic, data, qos, retain)
 	local map = js.decode(data)
 	if not (map and map.pld) then 
-		print("invalid data", data)
+		print("invalid data 1", data)
 		return 
 	end
 
 	local cmd = map.pld 
 	local func = cmd_map[cmd.cmd]
 	if not func then 
-		print("invalid data", data)
+		print("invalid data 2", data)
 		return
 	end
 

@@ -15,6 +15,7 @@ function method.add(ins, pol)
 	end 
 	
 	table.insert(ins.polarr, 1, pol)
+	print(111, js.encode(ins.polarr))
 	return true
 end
 
@@ -46,7 +47,7 @@ function method.adjust(ins, name_arr)
 		local pol = omap[name] 	assert(pol)
 		table.insert(new_arr, pol)
 	end
-
+	print(js.encode(new_arr))
 	ins.polarr = new_arr
 end
 
@@ -67,7 +68,6 @@ function method.set(ins, name, pol)
 end
 
 function method.get(ins, name)
-	print(ins, pol)
 	return (ins:find(name))
 end
 
@@ -75,7 +75,7 @@ function method.count(ins)
 	return #ins.polarr
 end
 
-function method.exist(ins, name)
+function method.exist(ins, name) 
 	for _, v in ipairs(ins.polarr) do 
 		if v:get_name() == name then 
 			return true 
@@ -108,6 +108,10 @@ function method.show(ins)
 	for k, v in pairs(ins.polarr) do 
 		print(k, js.encode(v))
 	end
+end
+
+function method.data(ins)
+	return ins.polarr
 end
 
 function method.check_auto(ins, ip)
