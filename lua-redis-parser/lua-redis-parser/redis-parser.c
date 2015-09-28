@@ -1,15 +1,28 @@
 #define DDEBUG 0
-#include "ddebug.h"
 
-#include <lua.h>
-#include <lauxlib.h>
+
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
+#include <assert.h>
+#include "ddebug.h"
 
 #define LUA_REDIS_PARSER_VERSION "0.10"
 
+
+#if LUA_VERSION_NUM < 502 
+# define lua_rawlen lua_objlen
+/* lua_...uservalue: Something very different, but it should get the job done */
+# define lua_getuservalue lua_getfenv
+# define lua_setuservalue lua_setfenv
+# define luaL_newlib(L,l) (lua_newtable(L), luaL_register(L,NULL,l))
+# define luaL_setfuncs(L,l,n) (assert(n==0), luaL_register(L,NULL,l))
+# define lua_resume(L,F,n) lua_resume(L,n)
+# define lua_pushglobaltable(L) lua_pushvalue(L, LUA_GLOBALSINDEX)
+#endif
 
 enum {
     BAD_REPLY           = 0,
@@ -43,6 +56,8 @@ static void *redis_null = NULL;
 
 static int parse_reply_helper(lua_State *L, char **src, size_t len);
 static int redis_parse_reply(lua_State *L);
+static int redis_parse_ready(lua_State *L);
+
 static int redis_parse_replies(lua_State *L);
 static int redis_build_query(lua_State *L);
 static const char * parse_single_line_reply(const char *src, const char *last,
@@ -55,6 +70,8 @@ static size_t get_num_size(size_t i);
 static char *sprintf_num(char *dst, int64_t ui64);
 static int redis_typename(lua_State *L);
 
+static int
+parse_multi_bulk_reply2(lua_State *L, char **src, const char *last);
 
 #define redis_nelems(arr) \
             (sizeof(arr) / sizeof(arr[0]))
@@ -62,6 +79,7 @@ static int redis_typename(lua_State *L);
 
 static const struct luaL_Reg redis_parser[] = {
     {"parse_reply", redis_parse_reply},
+	{"parse_ready", redis_parse_ready},
     {"parse_replies", redis_parse_replies},
     {"build_query", redis_build_query},
     {"typename", redis_typename},
@@ -72,7 +90,7 @@ static const struct luaL_Reg redis_parser[] = {
 int
 luaopen_redis_parser(lua_State *L)
 {
-    luaL_register(L, "redis.parser", redis_parser);
+    luaL_newlib(L, redis_parser);
 
     lua_pushliteral(L, LUA_REDIS_PARSER_VERSION);
     lua_setfield(L, -2, "_VERSION");
@@ -116,6 +134,215 @@ redis_parse_reply(lua_State *L)
     p = (char *) luaL_checklstring(L, 1, &len);
 
     return parse_reply_helper(L, &p, len);
+}
+
+
+static const char *parse_bulk_reply2(const char *src, const char *last, size_t *dst_len, int *rrr)
+{
+    const char *p = src;
+    ssize_t     size = 0;
+    const char *dst;
+
+	if (p >= last) {
+		*rrr = 1;
+		return NULL;
+	}
+
+    /* read the bulk size */
+    if (*p == '-') {
+		*rrr = -1;
+		return NULL;
+	}
+
+    while (*p != '\r') {
+        if (*p < '0' || *p > '9') {
+			*rrr = -1;
+			return NULL;
+		}
+
+        size *= 10;
+        size += *p - '0';
+
+        p++;
+        if (p >= last) {
+			*rrr = 1;
+			return NULL;
+		}
+    }
+
+    /* *p == '\r' */
+
+    p++;
+    if (p >= last) {
+		*rrr = 1;
+		return NULL;
+	}
+
+    if (*p++ != '\n') {
+		*rrr = -1;
+		return NULL;
+    }
+
+    /* read the bulk data */
+    if (last - p < size + sizeof("\r\n") - 1) {
+		*rrr = 1;
+		return NULL;
+	}
+
+    dst = p;
+
+    p += size;
+    if (*p++ != '\r') {
+        *rrr = -1;
+		return NULL;
+    }
+
+    if (*p++ != '\n') {
+		*rrr = -1;
+		return NULL;
+    }
+
+    *dst_len = size;
+    return dst; 
+}
+
+static int
+parse_multi_bulk_reply2(lua_State *L, char **src, const char *last)
+{
+    const char      *p = *src;
+    int              count = 0;
+    int              i;
+    size_t           dst_len;
+    const char      *dst;
+	int rrr = 0;
+
+    dd("enter multi bulk parser");
+
+    if (p >= last) {
+		return 1;
+	}
+
+    while (*p != '\r') {
+        if (*p < '0' || *p > '9') {
+            dd("expecting digit, but found %c", *p); 	
+            return -1;
+        }
+
+        count *= 10;
+        count += *p - '0';
+
+        p++;
+        if (p >= last) {
+			return 1;
+		}
+    }
+
+	if (count == 0) {
+		return -1;
+    }
+	
+    dd("count = %d", count);
+
+    /* *p == '\r' */
+
+    p++;
+    if (p >= last) {
+		return 1;
+	}
+
+    if (*p++ != '\n') {
+		return -1;
+    }
+
+    dd("reading the individual bulks");
+
+    for (i = 1; i <= count; i++) {
+        if (p >= last) {
+			return 1;
+		}
+		//dst_len = 0;
+        switch (*p) {
+        case '+':
+        case '-':
+        case ':':
+            p++;
+            dst = parse_single_line_reply(p, last, &dst_len);
+            break;
+
+        case '$':
+            p++;
+            dst = parse_bulk_reply2(p, last, &dst_len, &rrr);
+			if (!dst) {
+				if (rrr == -1) {
+					return -1;
+				} else if (rrr == 1) {
+					return 1;
+				} 
+			}
+            break;
+
+        default:
+			return -1;
+        }
+
+        if (dst_len == -2) {
+            dd("bulk %d reply parse fail for multi bulks", i);
+            return 1;
+        }
+
+        if (dst_len == -1) {
+            p = dst + sizeof("\r\n") - 1;
+        } else {
+            p = dst + dst_len + sizeof("\r\n") - 1;
+        } 
+    }
+
+    *src = (char *)p;
+    return 0; 
+}
+
+static int
+redis_parse_ready(lua_State *L)
+{
+	int 			rc;
+    char            *p, *last, *pp;
+    size_t           len;
+
+    if (lua_gettop(L) != 1) {
+        return luaL_error(L, "expected one argument but got %d", lua_gettop(L));
+    }
+
+    p = (char *) luaL_checklstring(L, 1, &len);
+	last = p + len;
+	pp = p;
+	if (*p != '*') {
+		lua_pushnil(L);
+		lua_pushstring(L, "invalid string");
+		return 2; 
+	}
+	p++;
+	
+	
+	rc = parse_multi_bulk_reply2(L, &p, last);
+	if (rc == -1) {
+		lua_pushnil(L);
+		lua_pushstring(L, "invalid string");
+		return 2; 
+	}
+	
+	if (p > last) {
+		lua_pushnil(L); 
+		return 1;
+	}
+	
+	if (rc == 1) {
+		lua_pushnil(L); 
+		return 1;
+	}
+
+	lua_pushboolean(L, 1);
+	lua_pushinteger(L, p - pp);
+	return 2;    
 }
 
 
@@ -335,7 +562,6 @@ parse_bulk_reply(const char *src, const char *last, size_t *dst_len)
     CHECK_EOF
 
     /* read the bulk size */
-
     if (*p == '-') {
         p++;
         CHECK_EOF
@@ -544,7 +770,7 @@ redis_build_query(lua_State *L)
 
     luaL_checktype(L, 1, LUA_TTABLE);
 
-    n = luaL_getn(L, 1);
+    n = lua_rawlen(L, 1);
 
     if (n == 0) {
         return luaL_error(L, "empty input param table");
