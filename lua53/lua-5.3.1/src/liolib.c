@@ -666,7 +666,11 @@ static int io_flush (lua_State *L) {
 
 
 static int f_flush (lua_State *L) {
-  return luaL_fileresult(L, fflush(tofile(L)) == 0, NULL);
+  int ret = fflush(tofile(L));
+  if (ret != 0) 
+	return luaL_fileresult(L, ret == 0, NULL);
+  return luaL_fileresult(L, fsync(fileno(tofile(L))) == 0, NULL); 
+  //return luaL_fileresult(L, fflush(tofile(L)) == 0, NULL);
 }
 
 
