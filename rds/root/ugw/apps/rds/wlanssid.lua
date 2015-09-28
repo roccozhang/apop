@@ -12,6 +12,10 @@ local function errmsg(fmt, ...)
 	return string.format(fmt, ...)
 end
 
+local function get_status(s, d)
+	return {status = s, data = d or "ok"}
+end
+
 local function get_wlanlist(pcli, group) 
 	local karr = {}
 	table.insert(karr, keys.c_wlan_list) 
@@ -92,7 +96,7 @@ local function wlanlist(conn, group, data)
 
 	local wlanid_map = listwlanid(group)
 	if not wlanid_map then 
-		return {}
+		return get_status(0, {})
 	end
 	
 	local wlan_map = {}
@@ -129,8 +133,9 @@ local function wlanlist(conn, group, data)
 			ext_wlanid = assert(map.ext_wlanid),
 			checkAps = checkarr[map.ext_wlanid] or '0',
 		}
-	end  
-	return resmap
+	end 
+
+	return get_status(0, resmap)  
 end 
 
 local web_map = {}
@@ -348,22 +353,21 @@ end
 local function wlanadd(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli)  
 
-	local map, err = param_validate(js.decode(data))
+	local map, err = param_validate(data)
 	if not map then 
-		return {status = 1, msg = err}
+		return get_status(1, err) 
 	end 
 
 	-- for _, func in ipairs({password_validate, vlan_validate, ssid_validate}) do 
 	for _, func in ipairs({password_validate, ssid_validate}) do 
 		local ret, err = func(group, map)
 		if not ret then 
-			return {status = 1, msg = err}
+			return get_status(1, err) 
 		end
 	end
 
 	local res = pcli:modify({cmd = "add_wlan", data = {group = group, map = map}})
-
-	return {status = 0, msg = "success"}
+	return res and get_status(0) or get_status(1, "modify fail") 
 end
 
 local function delete_validate(ssidarr)
@@ -396,12 +400,12 @@ end
 
 local function wlandelete(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 		assert(rds and pcli) 
-	local ssidarr = js.decode(data) 	assert(type(ssidarr) == "table")
+	local ssidarr = data 	assert(type(ssidarr) == "table")
 	
 	-- ssidarr = {{ssid = "ssid", wlanid = "00001"}}
 	if #ssidarr == 0 then 
 		log.debug("empty delete list")
-		return {status = 1, msg = "empty delete list"}
+		return get_status(1, "empty") 
 	end
 
 	local wlanid_ssid_map = {}
@@ -409,18 +413,18 @@ local function wlandelete(conn, group, data)
 		local wlanid, ssid = item.ext_wlanid, item.SSID
 		if type(wlanid) ~= "string" or type(ssid) ~= "string" or #wlanid ~= 5 or #ssid <= 0 then
 			log.error("error delete %s", data)
-			return {status = 1, msg = errmsg("error wlanid")}
+			return get_status(1, "error wlanid") 
 		end
 		wlanid_ssid_map[wlanid] = ssid
 	end
 
 	local ret, err = wlanid_ssid_validate(group, wlanid_ssid_map)
 	if not ret then 
-		return {status = 1, msg = err}
+		return get_status(1, err) 
 	end
 
 	local res = pcli:modify({cmd = "del_wlan", data = {group = group, map = wlanid_ssid_map}})
-	return {status = 0, msg = "success"}
+	return res and get_status(0) or get_status(1, "modify fail") 
 end 
 
 local modify_map = {}
@@ -604,22 +608,17 @@ end
 local function wlanmodify(conn, group, data)  
 	rds, pcli = conn.rds, conn.pcli 		assert(rds and pcli and group)
 
-	local map = js.decode(data)
+	local map = data
 
 	local cmd, data = map.cmd, map.data
 	local func = modify_map[cmd]	
 	if not func then
 		log.error("error modify %s", data)
-		return {status = 1, msg = errmsg("no such item %s", cmd or "")}
+		return get_status(1, "invalid " .. cmd or "")  
 	end
 
-	local ret, err = func(group, data)
-	if not ret then 
-		log.error("modify fail %s %s", data, err or "")
-		return {status = 1, msg = err} 
-	end
-
-	return {status = 0, msg = "success"}
+	local res, err = func(group, data)
+	return res and get_status(0) or get_status(1, err) 
 end 
 
 local function get_ap_des(group, apmap)
@@ -656,34 +655,18 @@ local function listaps(group)
 	end
 	
 	local desarr = get_ap_des(group, aparr)
-	local band_ap_map, ap_band_map = {}, {}
-	for _, band in ipairs(bands) do 
-		for _, apid in ipairs(aparr) do 
-			local apmap = band_ap_map[band] or {} 			assert(not apmap[apid]) 
-			apmap[apid] = {check = "0", reason = "", ap_des = desarr[apid]}
-			band_ap_map[band] = apmap
-
-			local bandmap = ap_band_map[apid] or {} 		assert(not bandmap[band]) 
-			bandmap[band] = {check = "0", reason = ""}
-			ap_band_map[apid] = bandmap
-		end
+	local apid_check_arr = {}
+	for _, apid in ipairs(aparr) do 
+		table.insert(apid_check_arr, {apid = apid, check = "0", ap_des = desarr[apid]}) 
 	end
 
-	for apid, banditem in pairs(ap_band_map) do 
- 		if banditem["2g"] and banditem["5g"] then 
- 			local tmp = band_ap_map["all"] or {}
- 			tmp[apid] = {check = "0", reason = "", ap_des = desarr[apid]}
- 			band_ap_map["all"] = tmp
- 		end
- 	end
-
-	return band_ap_map
+	return apid_check_arr
 end 
 
 local function list_check_ssid(group, wlanid)
 	assert(#wlanid == 5)
 
-	local karr = {pkey.waplist(wlanid), pkey.wband(wlanid)}
+	local karr = {pkey.waplist(wlanid)}
 	local varr = pcli:query(group, karr)
 	if not varr then 
 		return nil, errmsg("error mqtt")
@@ -694,14 +677,7 @@ local function list_check_ssid(group, wlanid)
 		log.error("get %s fail", k)
 		return nil, errmsg("error rds")
 	end
-
-	local band = varr[2]
-	if not band or not (band == "2g" or band == "5g" or band == "all") then 
-		log.error("get %s fail", k)
-		return nil, errmsg("error rds")
-	end
-
-	return aparr, band
+	return aparr
 end 
 
 --[[
@@ -711,45 +687,40 @@ end
 ]]
 local function wlanlistaps(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli)
-	local item = js.decode(data) 	assert(type(item) == "table") 
+	local item = data 	assert(type(item) == "table") 
 
  	local wlanid, ssid = item.ext_wlanid, item.SSID
  	if type(wlanid) ~= "string" or type(ssid) ~= "string" then 
 		log.error("invalid wlanid %s %s", wlanid or "", ssid or "")
-		return nil, errmsg("error wlanid")
+		return get_status(1, "error wlanid")
 	end 
 
- 	local band_apmap = listaps(group)
- 	if not band_apmap then 
- 		return {status = 1, msg = 'error wlanid'}
+	local apid_check_arr = listaps(group)
+ 	if not apid_check_arr then 
+ 		return get_status(1, "error rds")
  	end
 
- 	assert(ms.count(band_apmap) <= 3)
- 	if wlanid == "" and ssid == "" then
- 		return js.encode(band_apmap)
+	if wlanid == "" and ssid == "" then
+ 		return get_status(0, apid_check_arr) 
  	end
 
- 	local check_aparr, check_band = list_check_ssid(group, wlanid)
- 	if not check_aparr then
- 		return {status = 1, msg = "xxx"}
+ 	local check_aparr = list_check_ssid(group, wlanid)
+ 	if not check_aparr then 
+ 		return get_status(1, "error rds")
  	end 
 
- 	local bands = check_band == "all" and {"2g", "5g", "all"} or {check_band}
- 	for _, check_band in ipairs(bands) do
-	 	local apmap = band_apmap[check_band]
-	 	if not apmap then
-	 		print("not support band", check_band)
-	 	else
-		 	for _, apid in ipairs(check_aparr) do 
-		 		local item = apmap[apid]
-		 		if item then 
-		 			item.check = 1
-		 		end
-		 	end
-		 end
-	end
+ 	local nmap = {}
+ 	for _, apid in ipairs(check_aparr) do 
+ 		nmap[apid] = 1
+ 	end 
 
-	return js.encode(band_apmap)
+ 	for _, item in ipairs(apid_check_arr) do 
+ 		if nmap[item.apid] then 
+ 			item.check = "1"
+ 		end 
+ 	end 
+
+	return get_status(0, apid_check_arr) 
 end 
 
 return {

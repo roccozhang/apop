@@ -207,7 +207,7 @@ local function save_load_sta(conn, data, str)
 	assert(conn and conn.rds and data)
 	nrds = conn.rds  			assert(nrds)
 	
-	local map = js.decode(data)
+	local map = data
 	if not (map and map.data and map.oldData) then 
 		log.error("error data %s", data)
 		return false
@@ -243,7 +243,7 @@ local function save_load_balance(conn, group, data)
 	local tmp_map = save_load_sta(conn, data, "sta_tenacious")
 	
 	if not (kvmap and tmp_map) then 
-		return {status = 1, msg = "error"} 
+		return {status = 1, data = "error"} 
 	end
 
 	for k, v in pairs(tmp_map) do
@@ -252,11 +252,14 @@ local function save_load_balance(conn, group, data)
 	
 	if ms.count(kvmap) == 0 then 
 		log.debug("nothing changed")
-		return {status = 0, msg = "ok"} 
+		return {status = 0, data = "ok"} 
 	end
 	
 	local res = conn.pcli:modify({cmd = "set_load", data = {group = group, map = kvmap}})
-	return {status = 0, msg = "ok"} 
+	if res then 
+		return {status = 0, data = "ok"} 
+	end 
+	return {status = 1, data = "modify fail"} 
 end
 
 

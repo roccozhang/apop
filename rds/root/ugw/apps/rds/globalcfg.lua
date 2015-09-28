@@ -11,8 +11,12 @@ local function errmsg(fmt, ...)
 	return string.format(fmt, ...)
 end
 
+local function get_status(status, data)
+	return {status = status, data = data or "ok"}
+end
+
 local function get_band_support(conn, group, data)
-	return js.encode({"2g", "5g"})
+	return get_status(0, {"2g", "5g"})  
 end
 
 local function notify_wac(cmd_map)
@@ -20,7 +24,7 @@ local function notify_wac(cmd_map)
 end
 
 local function set_band_support(conn, group, data)
-	return js.encode({status = 0, msg = "success"})
+	return get_status(0, "not support")  
 end
 
 local function set_country(conn, group, data)
@@ -31,27 +35,28 @@ local function set_country(conn, group, data)
 	local country = require("country")
 	if not country.short(ctry) then 
 		log.error("invlid country %s", ctry)
-		return js.encode({status = 1, msg = errmsg("invalid country")})
+		return get_status(1, "invalid country") 
 	end
 
 	local res = pcli:modify({cmd = "set_ctry", data = {group = "default", ctry = ctry}}) 
-	return js.encode({status = 0, msg = "success"})
+	return get_status(0) 
 end
 
 local function hide_columns(conn, group, data)
 	assert(conn and conn.rds and group)
 	rds, pcli = conn.rds, conn.pcli  			assert(rds and pcli) 
 
-	local param = js.decode(data)
+	local param = data
 	if not (param and param.page ) then 
-		return js.encode({state = 1, msg = "invlid param"})
+		return get_status(1, "invalid param")  
 	end
 
 	local page, arr = param.page, param.data or {}
-	local s = #arr == 0 and "[]" or js.encode(arr)
-	log.debug("set %s %s", page, s)
+	local s = #arr == 0 and js.encode({"-1"}) or js.encode(arr)
+
 	rds:set(page, s)
-	return js.encode({state = 0, msg = "success"})
+
+	return get_status(0)  
 end
 
 local function get_hide_columns(conn, group, data)
@@ -60,42 +65,45 @@ local function get_hide_columns(conn, group, data)
 	local page = data	
 
 	if not page then 
-		return "false"
+		return get_status(1, "no page")  
 	end
 
 	local s = rds:get(page)
 	if not s then
-		return "false"
+		return get_status(0, {})  
 	end
-	return s
+
+	return get_status(0, js.decode(s))  
 end
 
 local function execute_cmd(conn, group, data)
 	assert(conn and conn.rds)
 	rds, pcli = conn.rds, conn.pcli  			assert(rds and pcli) 
-	local cmditem = js.decode(data)
+	local cmditem = data
 	if not (cmditem and cmditem.cmd and cmditem.data) then 
 		log.error("invalid data %s", data or "")
-		return js.encode({status = 1, msg = errmsg("error data")})
+		return get_status(1, errmsg("error data")) 
 	end
 
 	for _, apid in ipairs(cmditem) do 
 		if #apid ~= 17 then 
 			log.error("invalid data %s", data or "")
-			return js.encode({status = 1, msg = errmsg("error data")})
+			return get_status(1, errmsg("error data"))  
 		end
 	end
 
 	local cmdmap = {rebootErase = 1, rebootAps = 1} 
 	if not cmdmap[cmditem.cmd] then 
 		log.error("invalid data %s", cmditem.cmd)
-		return js.encode({status = 1, msg = errmsg("error data")})
+		return get_status(1, errmsg("error data"))  
 	end
 
 	local data = {cmd = cmditem.cmd, data = {}}
 	for _, apid in ipairs(cmditem.data) do 
 		pcli:sendcmd(apid, data)
 	end
+
+	return get_status(0)  
 end
 
 local function online_ap_list(conn, group, data)
@@ -122,7 +130,7 @@ local function set_debug(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli  			assert(rds and pcli)
 	local debug = data 		assert(debug)
 	local res = pcli:modify({cmd = "set_debug", data = {group = "default", debug = debug}}) 
-	return js.encode({status = 0, msg = "success"})
+	return get_status(0)  
 end
 
 return {

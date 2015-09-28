@@ -24,13 +24,6 @@ local function get_timestamp()
 	return  os.date("%Y%m%d %H%M%S") 
 end
 
-function method.set_expire(ins, enable, ts)
-	ins.expire = {enable, ts}
-end
-
-function method.set_remain(ins, enable, left)
-	ins.remain = {enable, left}
-end
 
 function method.check_mac(ins, mac) 
 	if ins:get_bind() == BIND_NONE then
@@ -97,7 +90,7 @@ function method.show(ins)
 	end 
 end
 
-local mac_part = "[0-9a-z]"
+local mac_part = "[0-9a-z][0-9a-z]"
 local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)	
 local function check(map)
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
@@ -133,12 +126,12 @@ local function check(map)
 
 	for _, mac in ipairs(maclist) do 
 		if not (mac and mac:find(mac_pattern)) then 
-			return nil, "invalid mac"
+			return nil, "invalid mac " .. mac
 		end
 	end
 
 	if not (expire and (expire[1] == 0 or expire[1] == 1)) then 
-		return nil, "invalid expire"
+		return nil, "invalid expire " .. tostring(expire[1])
 	end
 
 	if not (expire and expire[2]:find("%d%d%d%d%d%d%d%d %d%d%d%d%d%d")) then 

@@ -250,7 +250,7 @@ local function apmlistaps(conn, group, data)
 		APs = apinfo(group, aparr), 
 		country = ctry,
 	} 
-	return js.encode(res)
+	return {status = 0, data = res}
 end
 
 return {apmlistaps = apmlistaps}

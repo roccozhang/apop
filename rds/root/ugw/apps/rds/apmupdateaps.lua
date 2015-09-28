@@ -113,13 +113,16 @@ end
 local function apmupdateaps(conn, group, data)
 	assert(conn and conn.rds and group)
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli) 
-	
-	local t = js.decode(data)
+
+	local t = data
 	local edit, aps = t.edit, t.aps 	assert(edit and aps)
 
 	local kpmap = collect_all(edit, {dhcp = edit.ip_distribute == "dhcp", multi = #aps > 1}) 
 	local res = pcli:modify({cmd = "set_ap", data = {group = "default", kpmap = kpmap, aparr = aps}}) 
-	return js.encode({status = 0, msg = ""})
+	if res then 
+		return {status = 0, data = "ok"}
+	end 
+	return {status = 1, data = "modify fail"}
 end
 
 local function apmdeleteaps(conn, group, data)
@@ -127,20 +130,23 @@ local function apmdeleteaps(conn, group, data)
 	
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli)
 
-	local apid_arr = js.decode(data)
+	local apid_arr = data
 	if type(apid_arr) ~= "table" then
 		log.debug("error %s", data);
-		return js.encode({status = 1, msg = "error"})
+		return {status = 1, data = "error param"} 
 	end
 
 	for _, apid in ipairs(apid_arr) do 
 		if not (type(apid) == "string" and #apid == 17) then 
-			return js.encode({status = 1, msg = "error data"})
+			return {status = 1, data = "error param"}  
 		end
 	end
 
 	local res = pcli:modify({cmd = "del_ap", data = {group = "default", arr = apid_arr}})
-	return js.encode({status = 0, msg = ""})
+	if res then 
+		return {status = 0, data = "ok"}
+	end 
+	return {status = 1, data = "modify fail"}
 end
 
 return {apmupdateaps = apmupdateaps, apmdeleteaps = apmdeleteaps}

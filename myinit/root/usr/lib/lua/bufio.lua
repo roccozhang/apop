@@ -23,6 +23,12 @@ local function reader_fill_buffer(r)
 	if reader_bufsize(r) > 0 then
 		return true
 	end
+	if r.fd < 0 then
+		r.err = 'EOF'
+		r.buf = nil
+		r.pos = 0
+		return false
+	end
 	r.buf, r.err = se.read(r.fd, -r.fillsize, r.timeout)
 	if r.err then
 		r.buf = nil
@@ -71,10 +77,11 @@ local function reader_new(fd, option)
 	if not fillsize or fillsize <= 0 then
 		fillsize = 4096
 	end
+	local initbuf = option and option.initbuf or ''
 	local timeout = option and option.timeout or -1
 	local r = {
 		fd = fd,
-		buf = '',
+		buf = initbuf,
 		pos = 1,
 		fillsize = fillsize,
 		timeout = timeout,

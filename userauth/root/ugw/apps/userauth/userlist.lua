@@ -98,6 +98,7 @@ end
 
 local g_ins = new("/etc/config/user.json")
 g_ins:load()
+
 local function ins()
 	return g_ins
 end

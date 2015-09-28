@@ -7,5 +7,8 @@ errorfile=/tmp/ugw/log/apmgr.error
 
 test -d /tmp/ugw/log/ || mkdir -p /tmp/ugw/log/ 
 cd /ugw/apps/cfgmgr/
-lua /ugw/apps/cfgmgr/main.lua >/dev/null 2>>$errorfile
+while :; do 
+	lua /ugw/apps/cfgmgr/main.lua >/dev/null 2>>$errorfile
+	sleep 2
+done
 

@@ -120,13 +120,50 @@ redis_read_object = function(reader)
 	return nil, 'redis error, bad prefix: ' .. prefix
 end
 
-local function redis_call(r, ...)
-	if not (r and r.fd) then 
-		return nil, "fd close"
-	end
+local function redis_parse(str)
+	local r = bufio.new_reader(-1, { initbuf = str })
+	return redis_read_object(r)
+end
 
-	local cmd = redis_format_command({...})
-	local err = se.write(r.fd, cmd, r.write_timeout)
+local function redis_format(obj)
+	local objtype = type(obj)
+	if objtype == 'string' then
+		return string.format('$%d\r\n%s\r\n', #obj, obj)
+	elseif objtype == 'number' then
+		return string.format(':%d\r\n', obj)
+	elseif objtype == 'boolean' then
+		if obj == false then
+			return string.format('$-1\r\n')
+		else
+			return ':1\r\n'
+		end
+	elseif objtype == 'table' then
+		if obj.ok then
+			return string.format('+%s\r\n', obj.ok)
+		elseif obj.err then
+			return string.format('-%s\r\n', obj.err)
+		else
+			local res = string.format('*%d\r\n', #obj)
+			for _, elem in ipairs(obj) do
+				res = res .. redis_format(elem)
+			end
+			return res
+		end
+	else
+		error('redis_format() not support type: ' .. objtype)
+	end
+end
+
+local function redis_write(r, obj)
+	return se.write(r.fd, redis_format(obj), r.write_timeout)
+end
+
+local function redis_read(r)
+	return redis_read_object(r.reader)
+end
+
+local function redis_call(r, ...)
+	local err = se.write(r.fd, redis_format_command({...}), r.write_timeout)
 	if err then
 		return nil, err
 	end
@@ -137,6 +174,8 @@ local redis_metatable = {
 	__index = {
 		close = redis_close,
 		connect = redis_connect,
+		write = redis_write,
+		read = redis_read,
 		call = redis_call,
 	},
 }
@@ -154,6 +193,8 @@ end
 
 local redis = {
 	new = redis_new,
+	format = redis_format,
+	parse = redis_parse,
 }
 
 return redis

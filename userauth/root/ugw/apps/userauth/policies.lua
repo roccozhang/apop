@@ -15,7 +15,6 @@ function method.add(ins, pol)
 	end 
 	
 	table.insert(ins.polarr, 1, pol)
-	print(111, js.encode(ins.polarr))
 	return true
 end
 
@@ -47,7 +46,7 @@ function method.adjust(ins, name_arr)
 		local pol = omap[name] 	assert(pol)
 		table.insert(new_arr, pol)
 	end
-	print(js.encode(new_arr))
+
 	ins.polarr = new_arr
 end
 

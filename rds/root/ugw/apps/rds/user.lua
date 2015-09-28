@@ -135,7 +135,7 @@ local function apmlistusers(conn, group, data)
 		end
 	end
 
-	return js.encode(conflict_resolve(userarr, conflict_arr))
+	return {status = 0, data = conflict_resolve(userarr, conflict_arr)}
 end
 
 return {

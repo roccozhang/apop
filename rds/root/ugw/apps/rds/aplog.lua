@@ -11,19 +11,18 @@ local function getaplog(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli) 
 	local apid = data
 	local res = pcli:getlog(apid) or ""
-	return res
+	return {status = 0, data = res}
 end
 
 
 local function downloadaplog(conn, group, data) 
 	rds = conn.rds 								assert(rds)
 
-	local apidstr = data
-	local aparr = js.decode(apidstr)
+	local aparr = data
 	for _, apid in pairs(aparr) do
 		if #apid ~= 17 then 
-			log.error("error data %s", apidstr)
-			return "0"
+			log.error("error data")
+			return {status = 1, data = "invalid apid"}
 		end
 	end
 
@@ -42,7 +41,7 @@ local function downloadaplog(conn, group, data)
 	local ret, err = os.execute(cmd)
 	local _ = ret == 0 or log.error("execute %s fail %s", cmd, err or "") 
 
-	return "1"
+	return {status = 0, data = "ok"}
 end
 
 return {

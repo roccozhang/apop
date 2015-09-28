@@ -85,7 +85,9 @@ end
 
 local function get_group_data(t) 
 	if is_ac then 
-		return "default", t[1]
+		-- return "default", t[1]
+		local map = t[1]	assert(map.group, t[1])
+		return map.group, map.data
 	end 
 	
 	local map = t[1]	assert(map.group, t[1])
@@ -119,10 +121,9 @@ local function handle_client(cli)
 	end 
 
 	local cmd = table.remove(t, 1)
-	local func = cmd_func[cmd]
-	print(data, func, cmd, cmd_func[cmd], auth.policyget)
+	local func = cmd_func[cmd] 
 	if not func then
-		result = string.format("not find %s", cmd)
+		result = js.encode({status = 1, data = "invalid cmd " .. cmd})
 		log.error("error cmd %s", result)
 	else 
 		local group, data = get_group_data(t) 		assert(group)
@@ -140,8 +141,7 @@ end
 local function check_ac()
 	local s = read("uname -a", io.popen) or "" 
 	if s:find("3%.") then 
-		is_ac = true
-		print("is ac")
+		is_ac = true 
 	end 
 end 
 

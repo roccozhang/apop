@@ -134,8 +134,9 @@ end
 local function user_set(map)  
 	local group, map = map.group, map.data 
 	local ul = userlist.ins() 
+
 	for name, item in pairs(map) do
-		local ret, err = usr.check(map) 
+		local ret, err = usr.check(item) 
 		if not ret then 
 			return status(err)
 		end 
@@ -150,20 +151,20 @@ local function user_set(map)
 
 	for name, item in pairs(map) do 
 		local name, pwd, desc, enable, multi, bind, maclist = item.name, item.pwd, item.desc, item.enable, item.multi, item.bind, item.maclist
-		local expire_enable, expire_timestamp = item.expire_enable, item.expire_timestamp
-		local remain_enable, remaining = item.remain_enable, item.remaining
+		local expire, remain = item.expire, item.remain
 
-		assert(name and pwd and desc and enable and multi and bind and maclist and expire_enable and expire_timestamp and remain_enable and remaining)
+		assert(name and pwd and desc and enable and multi and bind and maclist and expire and remain)
 
 		local n = usr:new()
 		n:set_name(name):set_pwd(pwd):set_desc(desc):set_enable(enable):set_multi(multi)
 		n:set_bind(bind):set_maclist(maclist)
-		n:set_expire(expire_enable, expire_timestamp):set_remain(remain_enable, remaining)
+		n:set_expire(expire):set_remain(remain)
 
 		ul:set(name, n)
 	end
 
-	return status("set user ok")
+	ul:save()
+	return {status = 0}
 end 
 
 local function user_del(map) 
@@ -173,7 +174,8 @@ local function user_del(map)
 		local _ = ul:del(name), ol:del_user(name)
 	end 
 
-	return status("del users ok", true)
+	ul:save()
+	return {status = 0}
 end
 
 local function user_add(map) 
@@ -182,33 +184,38 @@ local function user_add(map)
 	for _, map in ipairs(arr) do 
 		local ret, err = usr.check(map) 
 		if not ret then 
-			return status(err)
+			return {status = 1, msg = err}
 		end 
 		if ul:exist(map.name) then 
-			return status("dup " .. map.name)
+			return {status = 1, msg = "dup " .. map.name} 
 		end
 	end
 
 	for _, map in ipairs(arr) do 
 		local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
-		local expire_enable, expire_timestamp = map.expire_enable, map.expire_timestamp
-		local remain_enable, remaining = map.remain_enable, map.remaining
+		local expire, remain = map.expire, map.remain 
 
-		assert(name and pwd and desc and enable and multi and bind and maclist and expire_enable and expire_timestamp and remain_enable and remaining)
+		assert(name and pwd and desc and enable and multi and bind and maclist and expire and remain)
 
 		local n = usr:new()
 		n:set_name(name):set_pwd(pwd):set_desc(desc):set_enable(enable)
-		n:set_multi(multi):set_bind(bind):set_maclist(maclist)
-		n:set_expire(expire_enable, expire_timestamp):set_remain(remain_enable, remaining)
+		n:set_multi(multi):set_bind(bind):set_maclist(maclist) 
+		n:set_expire(expire):set_remain(remain)
 
 		ul:add(n)
 	end
 
-	return status("add new user ok", true)
+	ul:save()
+	return {status = 0}
 end
 
 local function user_get(data)
-	return {status = 0, data = userlist.ins():data()}
+	local arr = {}
+	for _, user in pairs(userlist.ins():data()) do 
+		table.insert(arr, user)
+	end
+
+	return {status = 0, data = arr}
 end
 
 local function policy_set(map)
@@ -216,17 +223,17 @@ local function policy_set(map)
 	local group, map = map.group, map.data
 	local pols = policies.ins()
 	for name, item in pairs(map) do 
-		local ret, err = policy.check(map)
+		local ret, err = policy.check(item)
 		if not ret then 
-			return status(err)
-		end 
+			return {status = 1, msg = err} 
+		end
 
 		if not pols:exist(name) then 
-			return status("miss " .. name)
+			return {status = 1, msg = "miss " .. name} 
 		end 
 		
 		if name ~= item.name and pols:exist(item.name) then 
-			return status("dup " .. item.name)
+			return {status = 1, msg = "dup " .. item.name} 
 		end
 	end
 
@@ -239,7 +246,8 @@ local function policy_set(map)
 		pols:set(name, n)
 	end
 
-	return status("set policy ok", true)
+	pols:save()
+	return {status = 0}
 end 
 
 local function policy_add(map) 
@@ -248,63 +256,50 @@ local function policy_add(map)
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
 	local ret, err = policy.check(map)
 	if not ret then 
-		return status(err)
+		return {status = 1, msg = err}  
 	end 
 
 	local pols = policies.ins()
 	if pols:exist(name) then 
-		return status("dup " .. name)
+		return {status = 1, msg = "dup " .. name}  
 	end
 
 	local n = policy.new()
 	n:set_name(name):set_ip1(ip1):set_ip2(ip2):set_type(tp)
 	pols:add(n)
 
-	return status("add new policy ok")
+	pols:save()
+	return {status = 0}
 end 
 
 local function policy_del(map) 
 	-- local arr = {"hello", "worldc"}
 	local group, arr = map.group, map.data
-	local pols = policies.ins()
-	pols:show()	
+	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 
 		pols:del(name)
 	end
-	pols:show()
 
-	return status("del users ok", true)
+	pols:save()
+	return {status = 0}
 end
 
 local function policy_adj(map)  
-	-- local arr = {"hello", "world", "default"}
-	print(js.encode(map))
+	-- local arr = {"hello", "world", "default"} 
 	local group, arr = map.group, map.data
 	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 
 		if not pols:exist(name) then 
-			return "404 miss " .. name
+			return {status = 1, msg = "miss " .. name}   
 		end 
 	end
 
 	pols:adjust(arr)
-
-	return status("del users ok", true)
+	pols:save()
+	return {status = 0}
 end
 
-local function policy_get(data)
-	-- local pol = policy.new()
-	-- pol:set_name("default"):set_ip1("0.0.0.0"):set_ip2("255.255.255.255"):set_type("auto")
-	-- policies.ins():add(pol) 
-
-	-- local pol = policy.new()
-	-- pol:set_name("pol1"):set_ip1("192.168.0.1"):set_ip2("192.168.0.255"):set_type("auto")
-	-- policies.ins():add(pol)
-
-	-- local pol = policy.new()
-	-- pol:set_name("pol2"):set_ip1("192.168.0.1"):set_ip2("192.168.0.255"):set_type("auto")
-	-- policies.ins():add(pol)
-	-- policies.ins():save()
+local function policy_get(data) 
 	return {status = 0, data = policies.ins():data()}
 end
 
@@ -316,7 +311,7 @@ local function online_del(map)
 		ol:del_mac(mac)
 	end
 
-	return status("del online ok", true)
+	return {status = 0}
 end 
 
 local function online_get(data)

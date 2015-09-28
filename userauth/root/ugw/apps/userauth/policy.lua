@@ -27,7 +27,7 @@ end
 local function check(map)
 	local ip_pattern = "^[0-9]+%.[0-9]+%.[0-9]+%.[0-9]+$"
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
-	if not (name and #name > 0 and #name <= 16) then 
+	if not (name and #name > 0 and #name <= 16) then  
 		return nil, "invalid name"
 	end 
 

@@ -100,12 +100,12 @@ local function radiolist(conn, group, data)
 		end 
 	end 
 
-	return js.encode(resarr)
+	return {status = 0, data = resarr}
 end
 
 local function nwlan(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 			assert(rds and pcli) 
-	local data = js.decode(data) 			assert(data)
+	local data = data 							assert(data)
 	local band, apid = data.band, data.apid 	assert(band and apid)
  
 	local hkey = pkey.state_hash(apid)
@@ -114,13 +114,13 @@ local function nwlan(conn, group, data)
 		map.rssi = map.rssi and string.format("%4d", map.rssi) 
 	end
 	
-	return js.encode(hvarr)
+	return {status = 0, data = hvarr}
 end
 
 local function wlanstate(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli) 
 
-	local data = js.decode(data) 	assert(data) 
+	local data = data 					assert(data) 
 	local hkey = pkey.state_hash(data.apid)
 	local karr = {
 		pkey.key(keys.s_sta, {BAND = data.band}),
@@ -148,7 +148,7 @@ local function wlanstate(conn, group, data)
 		})
 	end
 	
-	return res
+	return {status = 0, data = res}
 end
 
 return {
