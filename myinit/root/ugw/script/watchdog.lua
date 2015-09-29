@@ -43,11 +43,10 @@ local function checklog(max)
 end
 
 local function watchlog()
-	local max = 1000
-	while true do 
-
+	local max = 256*1024
+	while true do  
 		checklog(max)
-		se.sleep(1)
+		se.sleep(20)
 	end
 end
 
