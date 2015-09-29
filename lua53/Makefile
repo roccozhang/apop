@@ -24,11 +24,14 @@ endef
 
 define Build/Compile
 	$(MAKE) -C $(SRC_DIR) linux $(TARGET_CONFIGURE_OPTS)
+	mkdir -p $(PKG_BUILD_DIR)/src/
+	cd $(SRC_DIR)/src/ && cp liblua53.so $(PKG_BUILD_DIR)/src/
 endef
 
 define Package/$(PKG_NAME)/install  
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib
+	
 	cd $(SRC_DIR)/src/ && cp lua53 $(1)/usr/sbin/
 	cd $(SRC_DIR)/src/ && cp liblua53.so $(1)/usr/lib/
 endef

@@ -16,20 +16,20 @@ define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=luv
-	DEPENDS:=+liblua libuv
+	DEPENDS:=+lua53 libuv
 endef
 
 define Package/$(PKG_NAME)/description
 	lua binding for libuv 
 endef
 
-define Build/Compile 
-	$(MAKE) -C luv/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS) LIBUV_INC=$(BUILD_DIR)/libuv-v1.6.1/include/ LIBUV_LIB=$(BUILD_DIR)/libuv-v1.6.1/.libs/ 
+define Build/Compile  
+	$(MAKE) -C luv/src $(TARGET_CONFIGURE_OPTS) LUA_SO_DIR=$(BUILD_DIR)/lua53/src  LIBUV_INC=$(BUILD_DIR)/libuv-v1.6.1/include/ LIBUV_LIB=$(BUILD_DIR)/libuv-v1.6.1/.libs/ 
 endef
 
 define Package/$(PKG_NAME)/install  
 	$(INSTALL_DIR) $(1)/usr/lib/lua/
-	$(INSTALL_BIN) luv/src/uv.so $(1)/usr/lib/lua/ 
+	$(INSTALL_BIN) luv/src/luv.so $(1)/usr/lib/lua/ 
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
