@@ -54,3 +54,5 @@ if [ $? -eq 0 ]; then
 fi
 
 mount_backup
+
+lua /ugw/script/watchdog.lua &

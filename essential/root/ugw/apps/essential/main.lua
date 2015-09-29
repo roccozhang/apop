@@ -24,7 +24,7 @@ local function clear_log()
 		return 
 	end 
 
-	local cmd = string.format("tail -%d %s > /tmp/essential.log; mv /tmp/essential.log %s", math.floor(max/3*2), path, path)
+	local cmd = string.format("tail -%d %s > /tmp/essential.log; cat /tmp/essential.log > %s", math.floor(max/3*2), path, path)
 	os.execute(cmd)
 end
 

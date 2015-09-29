@@ -1,44 +1,60 @@
-#!/bin/sh
+local se = require("se")
+local lfs = require("lfs")
 
-logfile=/tmp/ugw/log/apmgr.error
-log() {
-	echo `date` $* >> $logfile
-	test -f /ugw/etc/sh_debug || return 
-	echo $*
-}
+local function read(path, func)
+	func = func and func or io.open
+	local fp = func(path, "rb")
+	if not fp then 
+		return 
+	end 
+	local s = fp:read("*a")
+	fp:close()
+	return s
+end
 
-mkdir -p /tmp/ugw/log/ 
+local function checklog(max)
+	local path = "/tmp/ugw/log/apmgr.error"
+	local attr = lfs.attributes(path)
+	if not attr then 
+		return 
+	end 
 
-process_running() {
-	process=$1
-	for i in 1 2 3; do 
-		ps | grep $process | grep -v grep >/dev/null
-		if [ $? -eq 0 ]; then  
-			return 0
-		fi
-	done 
-	return 1
-}
+	if attr.size < max then 
+		return 
+	end 
 
-watch_common() {
-	local sc=$1
-	local path=$2
-	while :; do 
-		process_running $sc
-		if [ $? -ne 0 ]; then 
-			if [ -e "/tmp/sysupgrade" ]; then 
-				log "upgrading, exit"
-				exit 0
-			fi
-			log "start $sc"
-			$path >> $logfile 2>&1 &
-		fi
-		sleep 3
-	done
-}
+	local fp = io.open(path, "rb")
+	if not fp then 
+		return 
+	end 
 
-watch_essential() {
-	watch_common essential.sh /ugw/script/essential.sh
-}
+	fp:seek("set", math.floor(max * 2 / 3))
+	local s = fp:read("*a")
+	fp:close()
 
-watch_essential & 
+	local tmp = "/tmp/log.tmp"
+	local fp = io.open(tmp, "wb")
+	fp:write(s)
+	fp:flush()
+	fp:close()
+
+	os.execute(string.format("cat %s > %s", tmp, path))
+	os.remove(tmp)
+end
+
+local function watchlog()
+	local max = 1000
+	while true do 
+
+		checklog(max)
+		se.sleep(1)
+	end
+end
+
+
+
+local function main()
+	se.go(watchlog)
+end
+
+se.run(main)
