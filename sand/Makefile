@@ -39,7 +39,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	
+	#install -d -m0755 /home/opmt.git/staging_dir/target-mipsel_1004kc+dsp_musl-1.1.10/root-ramips/tmp-except/usr/bin 
+	$(CP) -a ./root/* $(1)/
 endef
 
 define Package/$(PKG_NAME)/postinst
