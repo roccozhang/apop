@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common 
+
+START=93
+
+USE_PROCD=1
+PROG=/ugw/script/sands.sh 
+
+start_service() {
+	include /lib/functions
+	procd_open_instance
+	procd_set_param command $PROG
+	procd_set_param respawn
+	procd_close_instance
+	
+	iptables -t nat -A PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 8080
+}
+
+reload_service() {
+	echo "restart sands"
+	killstr sands/main.lua
+}
+
+stop_service() {
+	echo "stop sand"
+	killstr sands/main.lua
+}
