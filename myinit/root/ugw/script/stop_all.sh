@@ -1,10 +1,10 @@
 #!/bin/sh
-/ugw/script/cfgmgr stop
-/ugw/script/essential stop 
-/ugw/script/logserver stop
-/ugw/script/rds stop
-/ugw/script/sands stop
-/ugw/script/status stop
-/ugw/script/tenacious stop
-/ugw/script/userauth stop
-/ugw/script/websrv stop
+/etc/init.d/cfgmgr stop
+/etc/init.d/essential stop 
+/etc/init.d/logserver stop
+/etc/init.d/rds stop
+/etc/init.d/sands stop
+/etc/init.d/status stop
+/etc/init.d/tenacious stop
+/etc/init.d/userauth stop
+/etc/init.d/websrv stop
