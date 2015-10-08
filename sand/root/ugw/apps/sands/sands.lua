@@ -2,6 +2,9 @@ local uv = require("luv")
 local sandutil = require("sandutil")
 local parser = require("redis.parser")
 
+local st_new = 0
+local st_auth = 1
+
 local tomap, toarr, checkarr = sandutil.tomap, sandutil.toarr, sandutil.checkarr
 
 local function fatal(fmt, ...)
@@ -61,6 +64,7 @@ function method.on_connection(ins, client)
 	ins.clientmap[fd] = {
 		data = "", 
 		param = nil,
+		state = st_new,
 		timer = timer,  			-- need free
 		client = client,  			-- need free 
 		timeout_cb = timeout_cb,
@@ -127,7 +131,7 @@ function method.do_publish(ins, topic, payload)
 	end 
 
 	local exist = false 
-	for fd in pairs(tmap) do 
+	for fd in pairs(tmap) do
 		exist = true 
 		break
 	end 
@@ -165,6 +169,11 @@ end
 -- command connect
 function cmd_map.cn(ins, fd, map)
 	local climap = ins.clientmap[fd] 		assert(climap)
+	if climap.state ~= st_new then 
+		local err = "invalid state"
+		publish_connack(climap.client, 1, err)
+		return nil, err
+	end
 	
 	climap.param = map
 	local m = climap.param
@@ -221,6 +230,7 @@ function cmd_map.cn(ins, fd, map)
  		ins:do_publish(m.ct, m.cp)
  	end
 
+ 	climap.state = st_auth
 	return publish_connack(climap.client, 0, "ok")
 end
 
@@ -231,18 +241,26 @@ function cmd_map.dc(ins, fd, map)
 end
 
 function cmd_map.pb(ins, fd, map)
+	local climap = ins.clientmap[fd] 		assert(climap)
+	if climap.state ~= st_auth then 
+		return nil, "no auth yet"
+	end 
+
 	local topic, payload = map.tp, map.pl 
 	if not (topic and payload) then 
 		return nil, "invalid publish param"
-	end 
+	end
 
 	ins:do_publish(topic, payload)
-	return true 
+	return true
 end
 
 -- command ping
 function cmd_map.pi(ins, fd, map)
 	local climap = ins.clientmap[fd] 	assert(climap)
+	if climap.state ~= st_auth then 
+		return nil, "no auth yet"
+	end 
 	local s = parser.build_query(toarr({id = "po"}))
 	uv.write(climap.client, s)
 	return true 
