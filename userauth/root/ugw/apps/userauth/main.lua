@@ -1,6 +1,7 @@
 package.path = "./?.lua;"..package.path
 local log = require("log")
 local js = require("cjson.safe")
+local kernelop = require("kernelop")
 local mosquitto = require("mosquitto")
 local dispatcher = require("dispatcher")
 
@@ -68,11 +69,13 @@ local function set_timeout(timeout, cb)
 	end
 end
 
-local function main() 
+local function main()
+	kernelop.get_all_user()
+
 	mosquitto.init()
 
 	mqtt = mosquitto.new("a/ac/userauth", false)
-	mqtt:login_set("#qmsw2..5#", "@oawifi15%") 
+	mqtt:login_set("#qmsw2..5#", "@oawifi15%")
 	local _ = mqtt:connect("127.0.0.1", 61883) or log.fatal("connect fail")
 
 	mqtt:callback_set("ON_MESSAGE", on_message)
@@ -85,9 +88,13 @@ local function main()
 
 	local timeout_arr = {
 		set_timeout(10, timeout_save), 
+		set_timeout(5, kernelop.check_network),
 		set_timeout(120, dispatcher.update_user),
 		set_timeout(20, dispatcher.update_online),
+		set_timeout(1800, dispatcher.adjust_elapse),
 	}
+
+	dispatcher.adjust_elapse() 	-- read from kernel and adjust
 
 	while true do
 		mqtt:loop(step) 
@@ -100,3 +107,4 @@ end
 log.setdebug(true)
 log.setmodule("ua")
 main()
+

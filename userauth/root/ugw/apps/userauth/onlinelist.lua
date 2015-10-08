@@ -1,6 +1,6 @@
-local online = require("online")
-local util = require("myutil")
 local lfs = require("lfs")
+local util = require("myutil")
+local online = require("online")
 local js = require("cjson.safe")
 
 local read, write = util.read, util.write 
@@ -45,10 +45,10 @@ function method.del_user(ins, name)
 	for _, mac in ipairs(del) do 
 		ins.usermap[mac], ins.change = nil, true
 	end
+	return del
 end
 
 function method.load(ins)
-	-- TODO check path exist
 	local s = read(ins.path)
 	if not s then 
 		ins.usermap = {}
@@ -86,6 +86,10 @@ end
 
 function method.data(ins)
 	return ins.usermap
+end
+
+function method.adjust(ins, users)
+	print("adjust")
 end
 
 local function new(path)

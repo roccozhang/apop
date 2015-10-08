@@ -1,10 +1,11 @@
 local log = require("log")
-local js = require("cjson.safe") 
 local usr = require("user")
-local userlist = require("userlist")
-local onlinelist = require("onlinelist")
+local js = require("cjson.safe")
 local policy = require("policy")
 local policies = require("policies")
+local kernelop = require("kernelop")
+local userlist = require("userlist")
+local onlinelist = require("onlinelist")
 
 local function status(msg, ok)
 	return (ok and "302 " or "404 ") .. msg
@@ -15,26 +16,26 @@ local function get_timestamp()
 end
 
 local function login_success(mac, ip, username)
-	print("login ok. TODO notify kernel", ip, mac, username)
+	kernelop.online(mac)
 	local ol = onlinelist.ins()
 	ol:add(mac, ip, username)
 	ol:show()
 end 
 
 local function auth(map)
-	local username, password, ip, mac = map.username, map.password, map.ip, map.mac or "00:00:00:00:00:ae"
+	local username, password, ip, mac = map.username, map.password, map.ip, map.mac
 	if not (username and password and ip and mac) then 
 		return status("missing login param")
-	end 
+	end
 
 	local ol = onlinelist.ins()
-	if ol:exist_mac(mac) then 
+	if ol:exist_mac(mac) then
 		return status("already online", true)
 	end
 
 	local ul = userlist.ins()
 	local user = ul:get(username)
-	if not user then 
+	if not user then
 		return status("user not exist")
 	end
 
@@ -60,7 +61,7 @@ local function auth(map)
 		return status("multi disabled")
 	end
 
-	if not user:check_mac(mac) then 
+	if not user:check_mac(mac) then
 		return status("mac disabled")
 	end
 
@@ -81,18 +82,19 @@ local function setup_update_online()
 			local _ = user:set_elapse(user:get_elapse() + d), user:set_part(user:get_part() + d)
 		end)
 
-		ol:set_change(true) 
+		ol:set_change(true)
 	end
 end
 
 local function kick_online_user(username)
-	onlinelist.ins():del_user(username)
+	local mac_arr = onlinelist.ins():del_user(username)
+	local _ = #mac_arr > 0 and kernelop.offline(mac_arr)
 end
 
 local function scan_expire()
 	local ol, ul = onlinelist.ins(), userlist.ins()
 	local expired_map = {}
-	ol:foreach(function(user) 
+	ol:foreach(function(user)
 		local name = user:get_name()
 		local u = ul:get(name)
 		if not u:check_expire() then
@@ -128,7 +130,7 @@ end
 
 local function update_user() 
 	scan_remain()
-	scan_expire() 
+	scan_expire()
 end
 
 local function user_set(map)  
@@ -139,7 +141,7 @@ local function user_set(map)
 		local ret, err = usr.check(item) 
 		if not ret then 
 			return status(err)
-		end 
+		end
 
 		if not ul:exist(name) then 
 			return status("miss " .. name)
@@ -171,7 +173,9 @@ local function user_del(map)
 	local group, arr = map.group, map.data 
 	local ol, ul = onlinelist.ins(), userlist.ins()
 	for _, name in ipairs(arr) do 
-		local _ = ul:del(name), ol:del_user(name)
+		ul:del(name)
+		local mac_arr = ol:del_user(name)
+		local _ = #mac_arr > 0 and kernelop.offline(mac_arr)
 	end 
 
 	ul:save()
@@ -247,6 +251,7 @@ local function policy_set(map)
 	end
 
 	pols:save()
+	kernelop.reset()
 	return {status = 0}
 end 
 
@@ -269,6 +274,7 @@ local function policy_add(map)
 	pols:add(n)
 
 	pols:save()
+	kernelop.reset()
 	return {status = 0}
 end 
 
@@ -281,11 +287,11 @@ local function policy_del(map)
 	end
 
 	pols:save()
+	kernelop.reset()
 	return {status = 0}
 end
 
 local function policy_adj(map)  
-	-- local arr = {"hello", "world", "default"} 
 	local group, arr = map.group, map.data
 	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 
@@ -296,13 +302,13 @@ local function policy_adj(map)
 
 	pols:adjust(arr)
 	pols:save()
+	kernelop.reset()
 	return {status = 0}
 end
 
 local function policy_get(data) 
 	return {status = 0, data = policies.ins():data()}
 end
-
 
 local function online_del(map) 
 	local group, arr = map.group, map.data
@@ -321,6 +327,12 @@ end
 local function save()
 	local ol, ul = onlinelist.ins(), userlist.ins()
 	local _ = ol:save(), ul:save()
+end
+
+local function adjust_elapse()
+	print("adjust_elapse") 
+	local ol = onlinelist.ins()
+	ol:adjust(kernelop.get_all_user())
 end
 
 return {
@@ -343,4 +355,6 @@ return {
 
 	online_del = online_del,
 	online_get = online_get,
+
+	adjust_elapse = adjust_elapse,
 }
