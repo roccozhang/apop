@@ -25,6 +25,9 @@ local function get_network()
 	local netw = {}
 	cursor:foreach("network", "interface", function(sec)
 		local name, ifname = sec[".name"], sec.ifname
+		if sec.type == "bridge" then 
+			ifname = "br-" .. name 
+		end 
 		netw[name] = ifname
 	end)
 	return netw

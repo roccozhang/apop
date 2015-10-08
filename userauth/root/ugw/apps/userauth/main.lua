@@ -70,7 +70,7 @@ local function set_timeout(timeout, cb)
 end
 
 local function main()
-	kernelop.get_all_user()
+	kernelop.reset()
 
 	mosquitto.init()
 
