@@ -61,9 +61,7 @@ function login_action() {
 		alert("非法参数！");
 		return;
 	}
-	username = "username";
-	password = "password";
-	// TODO check username and password
+
 	if (username == "" || password == "") {
 		alert("请输入帐号或密码！");
 		return;
@@ -75,19 +73,18 @@ function login_action() {
 			username: username,
 			password: password,
 			mac: mac, 
-			ip: ip,
+			ip: ip
 		},
 		function(d) {
-			var data = $.trim(d),
-				sta = data.substring(0,3);
-
-			if (parseInt(sta) === 302) {
-				window.location.href = g_redirect;
+			if (d.status == 0) {
+				//console.log(d)
+				window.location.href = "http://www.baidu.com";
 			} else {
 				//alert("登录失败！");
-				console.log("登录失败！" + data);
+				console.log("登录失败！" + d.data);
 			}
-		}
+		},
+		"json"
 	)
 }
 </script>

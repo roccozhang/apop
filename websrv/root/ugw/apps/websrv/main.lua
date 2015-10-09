@@ -113,7 +113,7 @@ handler_map[MG_RECV] = function(conn)
 
 	local func = uri_map[uri]
 	if not (func and func(conn)) then 
-		resins:set_field(seq, "r", "404 invalid uri " .. uri)
+		resins:set_field(seq, "r", js.encode({status = 1, data = "404 invalid uri " .. uri}))
 	end
 
 	return MG_MORE
@@ -145,7 +145,8 @@ handler_map[MG_POLL] = function(conn)
 
 	-- check timeout
 	if os.time() - resins:get_field(seq, "t") > 1 then
-		local _ = conn:write("404 auth timeout"), resins:del(seq) 
+		local s = js.encode({status = 1, data = "auth timeout"})
+		local _ = conn:write(s), resins:del(seq) 
 		return MG_TRUE
 	end
 
@@ -180,7 +181,8 @@ local function on_message(mid, topic, data, qos, retain)
 		return 
 	end
 
-	resins:set_field(map.seq, "r", map.pld)
+	local pld = map.pld
+	resins:set_field(map.seq, "r", type(pld) == "table" and js.encode(pld))
 end
 
 local function create_mqtt()

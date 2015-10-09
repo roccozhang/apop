@@ -53,7 +53,8 @@ local function update_user_status(mac_arr, action)
 	for _, mac in ipairs(mac_arr) do 
 		table.insert(st_arr, {UserMac = mac, Action = action})
 	end
-	local cmd = string.format("auth_tool '%s'", js.encode(st_arr)) 
+	local cmd = string.format("auth_tool '%s'", js.encode({UpdateUserStatus = st_arr}))
+	print(cmd) 
 	read(cmd, io.popen)
 end
 
@@ -72,7 +73,7 @@ local function get_all_user()
 
 	local user = {}
 	for part in s:gmatch(".-\n") do 
-		local ip, st, jf, mac = part:match("ip:(.-) status:(%d) jiffies:(%d+) mac:(%S+)")
+		local ip, st, jf, mac = part:match("ip:(.-) st:(%d) jf:(%d+) mac:(%S+)")
 		if ip then 
 			user[mac] = {ip = ip, st = tonumber(st), jf = tonumber(jf)}
 		end
