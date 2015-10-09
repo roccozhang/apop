@@ -1,4 +1,5 @@
 local lfs = require("lfs")
+local log = require("log")
 local util = require("myutil")
 local online = require("online")
 local js = require("cjson.safe")
@@ -89,7 +90,36 @@ function method.data(ins)
 end
 
 function method.adjust(ins, users)
-	print("adjust")
+	local usermap = ins.usermap
+
+	-- remove out of date
+	local del = {}
+	for mac, item in pairs(usermap) do 
+		if not users[mac] then 
+			log.debug("%s already deleted in kernel, remove", js.encode(item))
+			table.insert(del, mac)
+		end
+	end
+
+	for _, mac in ipairs(del) do 
+		ins:del_mac(mac)
+	end 
+
+	-- sync 
+	for mac, item in pairs(users) do
+		if item.st == 1 then -- online
+			local user = usermap[mac] 	assert(user)
+			local _ = user:get_ip() ~= item.ip and log.debug("ip change %s->%s", js.encode(user), js.encode(item))
+			user:set_jf(item.jf):set_ip(item.ip)
+		else 
+			ins:del_mac(mac) -- offline
+		end
+	end 
+
+	ins:set_change(true)
+	ins:save()
+
+	print("adjust users from kernel done")
 end
 
 local function new(path)

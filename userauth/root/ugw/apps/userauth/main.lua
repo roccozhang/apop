@@ -43,6 +43,7 @@ local function on_message(mid, topic, data, qos, retain)
 	end
 
 	local res = func(cmd.data)
+	print(data, js.encode(res))
 	if map.mod and map.seq then 
 		local res = mqtt:publish(map.mod, js.encode({seq = map.seq, pld = res}), 0, false)
 		local _ = res or log.fatal("publish %s fail", map.mod)

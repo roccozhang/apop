@@ -8,7 +8,7 @@ local userlist = require("userlist")
 local onlinelist = require("onlinelist")
 
 local function status(msg, ok)
-	return (ok and "302 " or "404 ") .. msg
+	return {status = ok and 0 or 1, data = msg}
 end
 
 local function get_timestamp()
@@ -315,6 +315,7 @@ local function online_del(map)
 	local ol = onlinelist.ins()
 	for _, mac in ipairs(arr) do 
 		ol:del_mac(mac)
+		kernelop.offline({mac})
 	end
 
 	return {status = 0}
@@ -329,8 +330,7 @@ local function save()
 	local _ = ol:save(), ul:save()
 end
 
-local function adjust_elapse()
-	print("adjust_elapse") 
+local function adjust_elapse() 
 	local ol = onlinelist.ins()
 	ol:adjust(kernelop.get_all_user())
 end

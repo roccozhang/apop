@@ -8,7 +8,7 @@ local policies = require("policies")
 local read = myutil.read
 
 local function get_iface()
-	local cmd = "lua /ugw/apps/userauth/networktool.lua"
+	local cmd = "lua /ugw/apps/userauth/tool.lua iface"
 	local s, err = read(cmd, io.popen)
 	local _ = s or log.error("cmd fail %s %s", cmd, err or "")
 	return js.decode(s) or {}
@@ -68,9 +68,17 @@ end
 local function get_all_user()
 	local cmd = string.format("auth_tool '%s' 2>/dev/null", js.encode({GetAllUser = 1}))
 	local s = read(cmd, io.popen)
-	-- print("----" .. s .. "----")
-	-- TODO 
-	return {}
+	s = s .. "\n"
+
+	local user = {}
+	for part in s:gmatch(".-\n") do 
+		local ip, st, jf, mac = part:match("ip:(.-) status:(%d) jiffies:(%d+) mac:(%S+)")
+		if ip then 
+			user[mac] = {ip = ip, st = tonumber(st), jf = tonumber(jf)}
+		end
+	end
+
+	return user
 end
 
 local function check_modify(path)
