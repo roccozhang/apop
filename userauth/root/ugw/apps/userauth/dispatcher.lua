@@ -30,6 +30,7 @@ local function auth(map)
 
 	local ol = onlinelist.ins()
 	if ol:exist_mac(mac) then
+		kernelop.online(mac)
 		return status("already online", true)
 	end
 
