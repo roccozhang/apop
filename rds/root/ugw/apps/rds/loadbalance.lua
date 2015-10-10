@@ -44,7 +44,7 @@ local function load_balance(conn, group, data)
 		sensitivity = map.wg_sensitivity,
 	}
 	
-	return res
+	return {status = 0, data = res} 
 end
 
 local function check_num(field, val, min, max)
@@ -69,62 +69,6 @@ local function check_num(field, val, min, max)
 end
 
 local load_map = {}
-
-load_map.load_enable = {
-	check = function(enable, val, map)
-		assert(map)
-		local kvmap = map.kvmap
-		if check_num("load_map.load_enable", val, 0, 1) then
-			kvmap[keys.g_ld_switch] = val
-			return true
-		end
-	end
-}
-
-load_map.userbase = {
-	check = function(enable, val, map)
-		if tostring(enable) == "0" then return true end
-		assert(map)
-		local kvmap = map.kvmap
-		if check_num("load_map.userbase", val, 1, 30) then 
-			return true
-		end
-	end
-}
-
-load_map.user_diff = {
-	check = function(enable, val, map)
-		if tostring(enable) == "0" then return true end
-		assert(map)
-		local kvmap = map.kvmap
-		if check_num("load_map.user_diff", val, 1, 20) then 
-			return true
-		end
-	end
-}
-
-load_map.rssi_diff = {
-	check = function(enable, val, map)
-		if tostring(enable) == "0" then return true end
-		assert(map)
-		local kvmap = map.kvmap
-		if check_num("load_map.rssi_diff", val, 5, 50) then 
-			return true
-		end
-	end
-}
-
-load_map.priority_5g = {
-	check = function(enable, val, map)
-		if tostring(enable) == "0" then return true end
-		assert(map)
-		local kvmap = map.kvmap
-		if check_num("load_map.priority_5g", val, 0, 1) then 
-			return true
-		end
-	end
-}
-
 load_map.sta_enable = {
 	check = function(enable, val, map)
 		assert(map)
@@ -194,7 +138,7 @@ local function get_change(newedit, obj)
 	return res
 end
 
-local function save_load_sta(conn, data, str)
+local function save_load_sta(conn, data)
 	assert(conn and conn.rds and data)
 	nrds = conn.rds  			assert(nrds)
 	
@@ -204,17 +148,12 @@ local function save_load_sta(conn, data, str)
 		return false
 	end
 	
-	local nmap, omap = map.data[str], map.oldData[str]
+	local nmap, omap = map.data, map.oldData
 	local modify_map = get_change(nmap, omap)
 	
 	-- 判断 不启用不修改 
-	local enable
-	if str == "load_balance" then
-		enable = nmap.load_enable
-	else
-		enable = nmap.sta_enable
-	end
-	
+	local enable = nmap.sta_enable
+
 	local kvmap = {}
 	for field, item in pairs(load_map) do 
 		local val = modify_map[field]
@@ -230,15 +169,10 @@ end
 local function save_load_balance(conn, group, data)
 	nrds, pcli = conn.rds, conn.pcli 	assert(nrds and pcli) 
 
-	local kvmap = {} 	--save_load_sta(conn, data, "load_balance")
-	local tmp_map = save_load_sta(conn, data, "sta_tenacious")
+	local kvmap = save_load_sta(conn, data)
 	
-	if not (kvmap and tmp_map) then 
+	if not kvmap then 
 		return {status = 1, data = "error"} 
-	end
-
-	for k, v in pairs(tmp_map) do
-		kvmap[k] = v
 	end
 	
 	if ms.count(kvmap) == 0 then 
