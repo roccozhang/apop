@@ -239,7 +239,7 @@ end
 local function save_load_balance(conn, group, data)
 	nrds, pcli = conn.rds, conn.pcli 	assert(nrds and pcli) 
 
-	local kvmap = save_load_sta(conn, data, "load_balance")
+	local kvmap = {} 	--save_load_sta(conn, data, "load_balance")
 	local tmp_map = save_load_sta(conn, data, "sta_tenacious")
 	
 	if not (kvmap and tmp_map) then 

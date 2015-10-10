@@ -142,7 +142,7 @@ local function optimization(conn, group, data)
 		},
 	}
 	
-	return {status = 0, data = "ok"}
+	return {status = 0, data = res}
 end
 
 local function save_optimal_sta(conn, data, str) 
