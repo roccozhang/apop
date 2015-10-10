@@ -233,7 +233,7 @@ local function del_ap(map)
 end
 
 local function set_ap(map)
-	local group, kpmap, aparr = map.group, map.kpmap, map.aparr 	assert(group and map and aparr)
+	local group, kpmap, aparr, batch = map.group, map.kpmap, map.aparr, map.batch 	assert(group and map and aparr and batch)
 	
 	local apid_map = {}
 	local allap = aplist(group)
@@ -251,9 +251,16 @@ local function set_ap(map)
 			end
 
 			for band, rmap in pairs(kpmap.radio) do
+				local skip_chanid = batch["batch_" .. band] == "0"
 				for kp, v in pairs(rmap) do 
-					local k = pkey.key(kp, {APID = apid, BAND = band}) 
-					change = cfgset(group, k, v) and true or change 
+					local update = true
+					if kp == "APID#a#BAND#chanid" and skip_chanid then
+						update = false
+					end
+					if update then 
+						local k = pkey.key(kp, {APID = apid, BAND = band}) 
+						change = cfgset(group, k, v) and true or change 
+					end
 				end
 			end
 

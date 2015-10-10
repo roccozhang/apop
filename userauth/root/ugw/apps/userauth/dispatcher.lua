@@ -322,7 +322,16 @@ local function online_del(map)
 end 
 
 local function online_get(data)
-	return {status = 0, data = onlinelist.ins():data()}
+	local arr = {}
+	for _, user in pairs(onlinelist.ins():data()) do 
+		table.insert(arr, {
+			ip = user:get_ip(),
+			mac = user:get_mac(),
+			name = user:get_name(),
+			elapse = user:get_elapse(),
+		})
+	end 
+	return {status = 0, data = arr}
 end
 
 local function save()
