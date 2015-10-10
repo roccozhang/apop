@@ -72,11 +72,12 @@ local function create_mqtt()
 end
 
 local function set_timeout(timeout, again, cb)
-	se.sleep(timeout)
-	while true do 
-		cb()
-		se.sleep(again)
-	end
+	se.go(function()
+		se.sleep(timeout)
+		while true do 
+			local _ = cb(), se.sleep(again)
+		end
+	end)
 end
 
 local function main()

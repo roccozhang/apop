@@ -54,7 +54,7 @@ local function update_user_status(mac_arr, action)
 		table.insert(st_arr, {UserMac = mac, Action = action})
 	end
 	local cmd = string.format("auth_tool '%s'", js.encode({UpdateUserStatus = st_arr}))
-	print(cmd) 
+	-- print(cmd) 
 	read(cmd, io.popen)
 end
 

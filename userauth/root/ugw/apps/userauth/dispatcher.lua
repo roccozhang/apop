@@ -73,6 +73,7 @@ end
 local function setup_update_online()
 	local last_check_time = os.time()
 	return function()
+		-- print("------------------------------")
 		local now = os.time() 
 		local d = now - last_check_time
 		last_check_time = now

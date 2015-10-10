@@ -38,19 +38,10 @@ local function load_balance(conn, group, data)
 	nrds, pcli = conn.rds, conn.pcli 	assert(nrds and pcli) 
 	local map = get_param(group)
 	local res = {
-		load_balance = {
-			load_enable = 0,
-			userbase = 10,
-			user_diff = 5,
-			rssi_diff = 20,
-			priority_5g = 0,
-		},
-		sta_tenacious = {
-			sta_enable = map.wg_tena_switch,
-			rssi_limit = map.wg_rssi_limit,
-			flow_limit = map.wg_flow_limit,
-			sensitivity = map.wg_sensitivity,
-		}
+		sta_enable = map.wg_tena_switch,
+		rssi_limit = map.wg_rssi_limit,
+		flow_limit = map.wg_flow_limit,
+		sensitivity = map.wg_sensitivity,
 	}
 	
 	return res

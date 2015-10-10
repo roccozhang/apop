@@ -29,7 +29,7 @@ function method.add(ins, mac, ip, name)
 	user:set_ip(ip)
 	user:set_name(name)
 	ins.usermap[mac], ins.change = user, true
-	user:show()
+	-- user:show()
 end
 
 function method.del_mac(ins, mac)
@@ -118,7 +118,6 @@ function method.adjust(ins, users)
 
 	ins:set_change(true)
 	ins:save()
-
 	print("adjust users from kernel done")
 end
 
