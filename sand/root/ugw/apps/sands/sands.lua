@@ -1,6 +1,6 @@
 local uv = require("luv") 
 local sandutil = require("sandutil")
-local parser = require("redis.parser")
+local parser = require("redis.parser53")
 
 local st_new = 0
 local st_auth = 1
@@ -159,11 +159,17 @@ local function publish_connack(client, st, msg)
 end
 
 local function check_version(version)
-	return true 
+	if version ~= "v0.1" then 
+		return false 
+	end 
+	return true
 end
 
 local function check_password(username, password)
-	return true 
+	if username == "ewrdcv34!@@@zvdasfFD*s34!@@@fadefsasfvadsfewa123$" and password == "1fff89167~!223423@$$%^^&&&*&*}{}|/.,/.,.,<>?" then 
+		return true 
+	end 
+	return false
 end
 
 -- command connect

@@ -1,7 +1,8 @@
+local se = require("se")
 local log = require("log")
+local sandc = require("sandc")
 local js = require("cjson.safe")
 local mongoose = require("mongoose")
-local mosquitto = require("mosquitto")
 
 local websrv_module = "a/ac/websrv"
 local auth_module = "a/ac/userauth"
@@ -56,7 +57,7 @@ end
 local mqtt
 local resins = resmap_new()
 local function send_request(map) 
-	mqtt:publish(auth_module, js.encode(map), 0, false)
+	mqtt:publish(auth_module, js.encode(map))
 end
 
 local uri_map = {}
@@ -175,7 +176,7 @@ local function dispatcher(conn, ev)
 	return MG_FALSE
 end
 
-local function on_message(mid, topic, data, qos, retain)
+local function on_message(topic, data)
 	local map = js.decode(data)
 	if not (map and map.seq and map.pld) then 
 		return 
@@ -186,13 +187,15 @@ local function on_message(mid, topic, data, qos, retain)
 end
 
 local function create_mqtt()
-	mosquitto.init()
-	local mqtt = mosquitto.new(websrv_module, false)
-	mqtt:login_set("#qmsw2..5#", "@oawifi15%") 
-	local _ = mqtt:connect("127.0.0.1", 61883) or log.fatal("connect fail")
-	mqtt:callback_set("ON_MESSAGE", on_message)
-	mqtt:callback_set("ON_DISCONNECT", function(...) log.fatal("mqtt disconnect %s", js.encode({...})) end)
-	local _ = mqtt:subscribe(websrv_module, 0) or log.fatal("subscribe fail")
+	local mqtt = sandc.new(websrv_module)
+	mqtt:set_auth("ewrdcv34!@@@zvdasfFD*s34!@@@fadefsasfvadsfewa123$", "1fff89167~!223423@$$%^^&&&*&*}{}|/.,/.,.,<>?")
+	mqtt:pre_subscribe(websrv_module)
+	local ret, err = mqtt:connect("127.0.0.1", 61886)
+	local _ = ret or log.fatal("connect fail %s", err)
+	mqtt:set_callback("on_message", on_message)
+	mqtt:set_callback("on_disconnect", function(st, err) log.fatal("mqtt close %s %s", st, err) end)
+	mqtt:run()
+
 	return mqtt
 end
 
@@ -205,23 +208,27 @@ local function create_server()
 	return server
 end
 
-local function main() 
-	local server
-	server, mqtt = create_server(), create_mqtt()
-
-	local count, step = 0, 5
-	local maxcount = 1000 / (step + step)
-	while true do
-		mqtt:loop(10) 
-		server:poll_server(10)
-
-		count = count + 1 
-		if count > maxcount then
-			count = 0, resins:clear_timeout()
-		end 
+local function start_server()
+	local server = create_server()
+	while true do 
+		server:poll_server(50)
+		se.sleep(0.01)
 	end
+end
+
+local function main()
+	mqtt = create_mqtt()
+	se.go(start_server)
+	se.go(function()
+		se.sleep(3)
+		resins:clear_timeout()
+	end)
 end
 
 log.setdebug(true)
 log.setmodule("wb")
-main()
+se.run(main)
+
+
+
+

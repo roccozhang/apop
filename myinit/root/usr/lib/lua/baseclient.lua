@@ -1,7 +1,8 @@
 local se = require("se")
 local log = require("log")
+local sandc = require("sandc")
 local js = require("cjson.safe") 
-local mosq = require("mosquitto")  
+-- local mosq = require("mosquitto")  
 
 local function yield()
 	se.sleep(0.000001)
@@ -9,6 +10,7 @@ end
 
 local function numb() return true end
 
+--[[
 local function try_connect(host, port)
 	local addr = string.format("tcp://%s:%s", host, tostring(port))
 
@@ -23,9 +25,11 @@ local function try_connect(host, port)
 
 	return false
 end
+--]]
 
 local mt = {}
 mt.__index = { 
+	--[[
 	publish_internel = function(ins, mqtt)
 		while true do 
 			local item = ins.publish_cache[1]
@@ -73,9 +77,9 @@ mt.__index = {
 		log.error("connect mosquitto fail %s", d)
 		ins.on_connect_fail()
 		se.sleep(1)
-	end,
+	end,--]]
 
-	run_as_routine = function(ins) 
+	--[[ run_as_routine = function(ins) 
 		local mqtt = mosq.new(ins.clientid, ins.clean)
 
 		mqtt:callback_set("ON_MESSAGE", function(mid, topic, payload, qos, retain) ins.on_message(payload) end)
@@ -94,14 +98,32 @@ mt.__index = {
 		end
 
 		mqtt:disconnect()
-	end,
+	-- end, ]]
 
 	run = function(ins)
-		se.go(ins.run_as_routine, ins)
+		local mqtt = sandc.new(ins.clientid)
+		mqtt:set_auth("ewrdcv34!@@@zvdasfFD*s34!@@@fadefsasfvadsfewa123$", "1fff89167~!223423@$$%^^&&&*&*}{}|/.,/.,.,<>?")
+		mqtt:pre_subscribe(ins.topic)
+		mqtt:set_keepalive(ins.keepalive)
+		local _ = ins.will_topic and mqtt:set_will(ins.will_topic, ins.will_payload)
+		local _ = ins.connect_topic and mqtt:set_connect(ins.connect_topic, ins.connect_payload)
+		local ret, err = mqtt:connect(ins.host, ins.port)
+		local _ = ret or log.fatal("connect fail %s", err)
+		mqtt:set_callback("on_message", function(topic, payload) ins.on_message(payload) end)
+		mqtt:set_callback("on_disconnect", function(st, err) 
+			-- ins.status = false
+			print(st, err)
+			ins.on_disconnect(st, err)
+		end)
+		-- ins.status = true
+		mqtt:run()
+		ins.mqtt = mqtt
 	end,
 
-	publish = function(ins, topic, payload, qos, ...) 
-		table.insert(ins.publish_cache, {topic, payload, qos, ...})
+	publish = function(ins, topic, payload) 
+		print("publish", topic, payload)
+		ins.mqtt:publish(topic, payload)
+		-- table.insert(ins.publish_cache, {topic, payload, qos, ...})
 	end,
 
 	set_callback = function(ins, name, func)
@@ -113,9 +135,9 @@ mt.__index = {
 		return ins.topic
 	end,
 
-	stop = function(ins)
-		ins.running = false
-	end,
+	-- stop = function(ins)
+	-- 	ins.running = false
+	-- end,
 
 	set_will = function(ins, topic, payload)
 		assert(topic and payload)	
@@ -128,24 +150,25 @@ local function new_base(map)
 		clientid = map.clientid,
 		topic = map.topic,
 		keepalive = map.keepalive or 10,
-		loop_timeout = 5,
+		-- loop_timeout = 5,
 		host = map.host or "127.0.0.1",
-		port = map.port or 1883,
-		clean = map.clean or false,
+		port = map.port or 61886,
+		-- clean = map.clean or false,
 
 		will_topic = nil,
 		will_payload = nil,
 
-		status = false,
-		publish_cache = {},
+		-- status = false,
+		-- publish_cache = {},
 
 		on_message = numb,
 		on_connect = numb,
 		on_disconnect = numb,
-		on_check_out = numb,
-		on_connect_fail = numb,
+		-- on_check_out = numb,
+		-- on_connect_fail = numb,
 		
-		running = true,
+		-- running = true,
+		mqtt = nil,
 	}
 
 	setmetatable(obj, mt)

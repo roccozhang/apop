@@ -15,7 +15,7 @@ mt_ext.__index = {
 	end,
 
 	publish = function(ins, topic, payload)
-		return ins.base_ins:publish(topic, payload, 0, false)
+		return ins.base_ins:publish(topic, payload)
 	end,
 
 	request_common = function(ins, topic, payload)
@@ -68,7 +68,7 @@ local function new()
 	local param = {
 		clientid = unique,
 		topic = unique, 
-		port = "61883",
+		port = 61886,
 	}
 	local ins = baseclient.new(param)
 

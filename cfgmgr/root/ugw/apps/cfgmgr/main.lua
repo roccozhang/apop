@@ -1,14 +1,15 @@
 require("global")
-
+local se = require("se")
 local log = require("log")
-local mosquitto = require("mosquitto")
-local js = require("cjson.safe") 
-local redis = require("lredis")
-local const = require("constant")
 local pkey = require("key") 
+local sandc = require("sandc")
+local redis = require("lredis")
+local online = require("online")
+local js = require("cjson.safe") 
+local const = require("constant") 
 local cfgmgr = require("cfgmanager")
 local dispatch = require("dispatch")
-local online = require("online")
+
 
 local keys = const.keys
 
@@ -28,7 +29,7 @@ local function cfgget(g, k)
 end
 
 local function mqtt_publish(t, s)
-	return mqtt:publish(t, s, 0, false) 
+	return mqtt:publish(t, s) 
 end
 
 local function replace_notify(apid_map) 
@@ -38,7 +39,7 @@ local function replace_notify(apid_map)
 			pld = {cmd = "replace", data = map},
 		}
 		-- print("a/ap/" .. apid, js.encode(p))
-		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p), 0, false) or log.fatal("publish fail")
+		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p)) or log.fatal("publish fail")
 	end
 end
 
@@ -60,7 +61,7 @@ topic_map["a/ac/query/version"] = function(map)
 			-- seq = map.seq,
 			pld = {cmd = "delete", data = {"version+"}},
 		}
-		local _ = mqtt_publish(map.tpc, js.encode(p), 0, false) or log.fatal("publish fail")
+		local _ = mqtt_publish(map.tpc, js.encode(p)) or log.fatal("publish fail")
 		return
 	end
 
@@ -81,7 +82,7 @@ topic_map["a/ac/cfgmgr/register"] = function(map)
 		pld = res,
 	}
 
-	local _ = mqtt_publish(map.tpc, js.encode(p), 0, false) or log.fatal("publish fail")
+	local _ = mqtt_publish(map.tpc, js.encode(p)) or log.fatal("publish fail")
 	local _ = apid_map and replace_notify(apid_map) 
 end
 
@@ -94,7 +95,7 @@ local function update_ap(apid_map)
 			mod = "a/local/cfgmgr",
 			pld = res,
 		}
-		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p), 2, false) or log.fatal("publish fail")
+		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p)) or log.fatal("publish fail")
 	end
 end
 
@@ -113,7 +114,7 @@ modify_map["del_ap"] = function(map, set_done_cb)
 			pld = {cmd = "delete", data = {"del_ap+"}},
 		}
 		
-		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p), 2, false) or log.fatal("publish fail")
+		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p)) or log.fatal("publish fail")
 	end
 end
 
@@ -125,7 +126,7 @@ modify_map["upgrade"] = function(map, set_done_cb)
 			mod = "a/local/cfgmgr",
 			pld = {cmd = "upgrade", data = {host = cfgget(group, keys.c_update_host)}}, 	-- TODO host 
 		}
-		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p), 2, false) or log.fatal("publish fail")
+		local _ = mqtt_publish("a/ap/" .. apid, js.encode(p)) or log.fatal("publish fail")
 	end
 
 	set_done_cb()
@@ -239,7 +240,7 @@ topic_map["a/ac/query/noupdate"] = function(map)
 	online.set_noupgrade(map.group, map.apid)
 end
 
-local function on_message(mid, topic, data, qos, retain)   
+local function on_message(topic, data)   
 	local func = topic_map[topic] 
 	if func then 
 		local map = js.decode(data)
@@ -251,23 +252,38 @@ local function on_message(mid, topic, data, qos, retain)
 end
 
 local function connect_rds()
-	local ins = redis.connect("127.0.0.1", 6379) 	assert(ins) 
-	rds = ins
+	rds = redis.connect("127.0.0.1", 6379) 	assert(rds)  
 end
 
-local function subscribe()
-	local _ = mqtt:subscribe("a/ac/cfgmgr/#", 0) or log.fatal("subscribe fail")
-	local _ = mqtt:subscribe("a/ac/query/#", 0) or log.fatal("subscribe fail")
+local function create_mqtt()
+	local this_module = "a/ac/cfgmgr"
+	local mqtt = sandc.new(this_module)
+	mqtt:set_auth("ewrdcv34!@@@zvdasfFD*s34!@@@fadefsasfvadsfewa123$", "1fff89167~!223423@$$%^^&&&*&*}{}|/.,/.,.,<>?")
+
+	mqtt:pre_subscribe("a/ac/query/version",
+					"a/ac/cfgmgr/register",
+					"a/ac/cfgmgr/modify",
+					"a/ac/cfgmgr/network",
+					"a/ac/cfgmgr/query",
+					"a/ac/query/will",
+					"a/ac/query/connect",
+					"a/ac/query/noupdate")
+	local ret, err = mqtt:connect("127.0.0.1", 61886)
+	local _ = ret or log.fatal("connect fail %s", err)
+	mqtt:set_callback("on_message", on_message)
+	mqtt:set_callback("on_disconnect", function(st, err)  
+		log.fatal("mqtt close %s %s", st, err) 
+	end)
+	mqtt:run()
+
+	return mqtt
 end
 
-local function timeout_save()
-	local timeout, last = 3, cursec()
-	return function()
-		local now = cursec()
-		if last <= now and now - last < timeout then 
-			return 
-		end  
-		last = now, cfgmgr.save_all() 
+local function set_timeout(timeout, again, cb)
+	se.sleep(timeout)
+	while true do 
+		cb()
+		se.sleep(again)
 	end
 end
 
@@ -277,36 +293,10 @@ local function main()
 	connect_rds()
 	online.set_rds(rds)
 
-	mosquitto.init()
-
-	mqtt = mosquitto.new("a/ac/cfgmgr", false)
-	mqtt:login_set("#qmsw2..5#", "@oawifi15%") 
-	local _ = mqtt:connect("127.0.0.1", 61883) or log.fatal("connect fail")
-
-	mqtt:callback_set("ON_MESSAGE", on_message)
-	mqtt:callback_set("ON_DISCONNECT", function(...)  
-		log.fatal("mqtt disconnect %s", js.encode({...}))
-	end)
-
-	subscribe() 
-
-	local status = true
-	local step, save = 1000, timeout_save()
-	
-	while true do
-		mqtt:loop(step)
-		if not status then 
-			mqtt:login_set("#qmsw2..5#", "@oawifi15%") 
-			local ret = mqtt:connect()
-			if ret  then
-				status = true, subscribe() 
-				log.debug("connect mqtt and subscribe ok")
-			end
-		end
-		save()
-	end
+	mqtt = create_mqtt()
+	set_timeout(3, 3, cfgmgr.save_all)
 end
 
 log.setdebug(true)
 log.setmodule("cm")
-main()
+se.run(main)

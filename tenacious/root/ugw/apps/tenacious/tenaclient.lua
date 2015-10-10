@@ -67,7 +67,7 @@ local function new()
 	local param = {
 		clientid = unique,	--避免"clientid重复"导致错误，此处以程序名作为后缀
 		topic = unique, 
-		port = "61883",
+		port = 61886,
 	}
 	local ins = baseclient.new(param)
 
@@ -81,8 +81,7 @@ local function new()
 	}
 	setmetatable(obj, mt_ext)
 	--此处用于baseclient接受message处理
-	ins:set_callback("on_message", function(payload) 
-
+	ins:set_callback("on_message", function(payload)  
 		local map = js.decode(payload)
 		if not (map and map.pld) then 
 			return 

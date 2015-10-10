@@ -28,6 +28,10 @@ function method.pre_subscribe(ins, ...)
 	ins.param.topics = {...}
 end
 
+function method.set_keepalive(ins, s)
+	ins.param.keepalive = s
+end
+
 function method.running(ins)
 	return ins.state ~= st_stop
 end
@@ -36,7 +40,7 @@ local function close_client(ins, err)
 	print("close on error", err, ins.param.clientid) 
 	se.close(ins.client)
 	ins.client, ins.state = nil, st_stop
-	ins:on_disconnect(1, err)
+	ins.on_disconnect(1, err)
 end
 
 function method.publish(ins, topic, payload)
@@ -64,7 +68,7 @@ function method.disconnect(ins)
 	se.close(ins.client)
 	ins.client = nil
 	ins.state = st_stop
-	ins:on_disconnect(0, "close by user")
+	ins.on_disconnect(0, "close by user")
 end
 
 function method.connect(ins, host, port)
@@ -224,7 +228,7 @@ local function run_internal(ins)
 			close_client(ins, rerr)
 			break
 		end
-	end  
+	end
 end
 
 function method.run(ins)
@@ -241,7 +245,7 @@ local function new(clientid)
 			clientid = clientid,
 			username = "",
 			password = "",
-			version = "v1.0",
+			version = "v0.1",
 			keepalive = 30,
 			topics = {},
 			connect_topic = nil,

@@ -12,8 +12,8 @@ local cfg = {
 	{	path = "/etc/config/network"	}, 
 	{	path = "/etc/tc.json"	}, 
 	{	path = "/etc/config/default/m.json"	}, 
-	{	path = "/etc/tc.json"	}, 
-	{	path = "/etc/tc.json"	}, 
+	{	path = "/etc/config/policy.json"	}, 
+	{	path = "/etc/config/user.json"	}, 
 }
 
 return cfg

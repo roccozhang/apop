@@ -117,8 +117,9 @@ local function apmupdateaps(conn, group, data)
 	local t = data
 	local edit, aps = t.edit, t.aps 	assert(edit and aps)
 
+	local batch = {batch_5g = edit.radio_5g.batch_enable, batch_2g = edit.radio_2g.batch_enable}
 	local kpmap = collect_all(edit, {dhcp = edit.ip_distribute == "dhcp", multi = #aps > 1}) 
-	local res = pcli:modify({cmd = "set_ap", data = {group = "default", kpmap = kpmap, aparr = aps}}) 
+	local res = pcli:modify({cmd = "set_ap", data = {group = "default", kpmap = kpmap, aparr = aps, batch = batch}}) 
 	if res then 
 		return {status = 0, data = "ok"}
 	end 

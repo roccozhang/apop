@@ -14,7 +14,7 @@ end
 
 local function clear_timeout()
 	local change = false
-	local now, timeout = cursec(), 30
+	local now, timeout = cursec(), 300
 	for group, active in pairs(group_map) do 
 		local d = now - active
 		if d >= timeout then 

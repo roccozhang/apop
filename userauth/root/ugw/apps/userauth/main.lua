@@ -1,13 +1,13 @@
-package.path = "./?.lua;"..package.path
+local se = require("se")
 local log = require("log")
+local sandc = require("sandc")
 local js = require("cjson.safe")
-local kernelop = require("kernelop")
-local mosquitto = require("mosquitto")
+local kernelop = require("kernelop") 
 local dispatcher = require("dispatcher")
 
 local mqtt
 local function cursec()
-	return os.time()
+	return math.floor(se.time())
 end
 
 local cmd_map = {
@@ -28,7 +28,7 @@ local cmd_map = {
 	online_get = dispatcher.online_get,
 }
 
-local function on_message(mid, topic, data, qos, retain)
+local function on_message(topic, data)
 	local map = js.decode(data)
 	if not (map and map.pld) then 
 		print("invalid data 1", data)
@@ -43,69 +43,56 @@ local function on_message(mid, topic, data, qos, retain)
 	end
 
 	local res = func(cmd.data)
-	print(data, js.encode(res))
 	if map.mod and map.seq then 
 		local res = mqtt:publish(map.mod, js.encode({seq = map.seq, pld = res}), 0, false)
 		local _ = res or log.fatal("publish %s fail", map.mod)
 	end
 end
 
-local function subscribe()
-	local _ = mqtt:subscribe("a/ac/userauth", 0) or log.fatal("subscribe fail")
-end
-
 local function timeout_save()
 	dispatcher.save()
 end
 
-local function set_timeout(timeout, cb)
-	local last = cursec()
-	return function()
-		local now = cursec()
-		if last <= now and now - last < timeout then 
-			return
-		end
+local function create_mqtt()
+	local auth_module = "a/ac/userauth"
+	local mqtt = sandc.new(auth_module)
+	mqtt:set_auth("ewrdcv34!@@@zvdasfFD*s34!@@@fadefsasfvadsfewa123$", "1fff89167~!223423@$$%^^&&&*&*}{}|/.,/.,.,<>?")
+	mqtt:pre_subscribe(auth_module)
+	local ret, err = mqtt:connect("127.0.0.1", 61886)
+	local _ = ret or log.fatal("connect fail %s", err)
+	mqtt:set_callback("on_message", on_message)
+	mqtt:set_callback("on_disconnect", function(...) 
+		print("on_disconnect", ...)
+		log.fatal("mqtt disconnect")
+	end)
 
-		last = now, cb()
+	mqtt:run()
+
+	return mqtt
+end
+
+local function set_timeout(timeout, again, cb)
+	se.sleep(timeout)
+	while true do 
+		cb()
+		se.sleep(again)
 	end
 end
 
 local function main()
 	kernelop.reset()
 
-	mosquitto.init()
+	mqtt = create_mqtt()
 
-	mqtt = mosquitto.new("a/ac/userauth", false)
-	mqtt:login_set("#qmsw2..5#", "@oawifi15%")
-	local _ = mqtt:connect("127.0.0.1", 61883) or log.fatal("connect fail")
-
-	mqtt:callback_set("ON_MESSAGE", on_message)
-	mqtt:callback_set("ON_DISCONNECT", function(...)  
-		log.fatal("mqtt disconnect %s", js.encode({...}))
-	end)
-
-	subscribe()
-	local step = 10
-
-	local timeout_arr = {
-		set_timeout(10, timeout_save), 
-		set_timeout(5, kernelop.check_network),
-		set_timeout(120, dispatcher.update_user),
-		set_timeout(20, dispatcher.update_online),
-		set_timeout(1800, dispatcher.adjust_elapse),
-	}
-
-	dispatcher.adjust_elapse() 	-- read from kernel and adjust
-
-	while true do
-		mqtt:loop(step) 
-		for _, func in ipairs(timeout_arr) do 
-			func()
-		end
-	end
+	set_timeout(10, 10, timeout_save)
+	set_timeout(5, 5, kernelop.check_network)
+	set_timeout(120, 120, dispatcher.update_user)
+	set_timeout(1, 20, dispatcher.update_online)
+	set_timeout(0.1, 1800, dispatcher.adjust_elapse)
 end
 
 log.setdebug(true)
 log.setmodule("ua")
-main()
+
+se.run(main)
 

@@ -86,9 +86,11 @@ static const struct luaL_Reg redis_parser[] = {
     {NULL, NULL}
 };
 
-
-int
-luaopen_redis_parser(lua_State *L)
+#ifdef BY_LUA_53
+int luaopen_redis_parser53(lua_State *L)
+#else
+int luaopen_redis_parser(lua_State *L)
+#endif 
 {
     luaL_newlib(L, redis_parser);
 

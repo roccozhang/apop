@@ -93,7 +93,7 @@ local function get_delete_files(apid_dir)
 end
 
 local function save_log(apid, map)
-	local aplog_dir = "/ugw/log/aplog/"
+	local aplog_dir = "/tmp/ugw/log/aplog/"
 	local apid_dir = aplog_dir .. apid 
 
 	for _, dir in ipairs({aplog_dir, apid_dir}) do 

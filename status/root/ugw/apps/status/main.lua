@@ -36,7 +36,6 @@ local function is_online(apid)
 
 	local key = "ol/" .. group
 	local v = rds:hget(key, apid)
-	print(key, apid, v)
 	return tostring(v) == "1" 
 end 
 
