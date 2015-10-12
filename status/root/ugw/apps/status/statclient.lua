@@ -1,6 +1,6 @@
 local se = require("se") 
 local js = require("cjson.safe") 
-local baseclient = require("baseclient")
+local baseclient = require("baseclient2")
 
 local function cursec()
 	return math.floor(se.time())

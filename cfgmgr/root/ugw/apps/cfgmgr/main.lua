@@ -29,6 +29,7 @@ local function cfgget(g, k)
 end
 
 local function mqtt_publish(t, s)
+	assert(t and s)
 	return mqtt:publish(t, s) 
 end
 

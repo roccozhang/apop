@@ -64,7 +64,7 @@ local function get_config(group, apid)
 	local varr = pcli:query(group, karr)
 	if not varr then 
 		log.error("query fail")
-		return
+		return {}
 	end 
 
 	local kvmap = {}

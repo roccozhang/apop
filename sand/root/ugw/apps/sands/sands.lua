@@ -291,8 +291,8 @@ function method.on_client_data(ins, fd, data)
 
 		climap.data = climap.data:sub(p + 1) 			-- trim data had been parsed
 
-		local climap = tomap(arr)
-		local id = climap.id 							-- command id 
+		local datamap = tomap(arr)
+		local id = datamap.id 							-- command id 
 		if not id then 
 			return ins:close_client(fd, "miss id")
 		end 
@@ -302,7 +302,7 @@ function method.on_client_data(ins, fd, data)
 			return ins:close_client(fd, "no " .. id)
 		end
 
-		local ret, err = func(ins, fd, climap)
+		local ret, err = func(ins, fd, datamap)
 		if not ret then
 			return ins:close_client(fd, err)
 		end 
