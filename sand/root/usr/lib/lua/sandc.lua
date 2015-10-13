@@ -201,7 +201,7 @@ local function run_internal(ins)
 
 			ins.data = ins.data:sub(p + 1) 					-- trim data parsed
 			local ret, err = dispatch(tomap(arr))
-			if not ret then 
+			if not ret then
 				return nil, err 
 			end 
 		end
@@ -218,7 +218,7 @@ local function run_internal(ins)
 
 		-- process data
 		local ret, err = on_recv()
-		if not ret then 
+		if err then
 			close_client(ins, err)
 			break
 		end

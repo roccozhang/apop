@@ -14,6 +14,15 @@ local function get_firewall()
 	local iface = {}
 	cursor:foreach("firewall", "zone", function(sec)
 		local name, network = sec.name, sec.network
+		if type(network) == "string" then
+			local s = network .. " "
+			local arr = {}
+			for part in s:gmatch("(%S-)%s") do 
+				table.insert(arr, part)
+			end 
+			network = arr
+		end
+
 		iface[name] = network
 	end)
 	return iface

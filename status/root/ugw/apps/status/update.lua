@@ -92,6 +92,7 @@ local function get_delete_files(apid_dir)
 	return del_arr
 end
 
+--[[
 local function save_log(apid, map)
 	local aplog_dir = "/tmp/ugw/log/aplog/"
 	local apid_dir = aplog_dir .. apid 
@@ -125,13 +126,14 @@ local function save_log(apid, map)
 		local _ = ret or log.error("remove %s fail %s", filepath, err) 
 	end
 end
+--]]
 
 local function set_rds(r)
 	rds = r
 end
 
 local basic_func_map = {
-	log = save_log,
+	-- log = save_log,
 	basic = update_basic,
 }
 
