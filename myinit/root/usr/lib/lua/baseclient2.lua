@@ -121,7 +121,7 @@ mt.__index = {
 	end,
 
 	publish = function(ins, topic, payload) 
-		print("publish", topic, payload)
+		-- print("publish", topic, payload)
 		ins.mqtt:publish(topic, payload)
 		-- table.insert(ins.publish_cache, {topic, payload, qos, ...})
 	end,

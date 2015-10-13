@@ -9,16 +9,15 @@ local function save_file(path, map)
 	local tmp, del = path .. ".tmp", path .. ".del"
 
 	local s = js.encode(map)
-	local fp = io.open(tmp, "wb") or log.fatal("open %s fail", tmp)
+	local fp, err = io.open(tmp, "wb")
+	local _ = fp or log.fatal("open %s fail %s", tmp, err)
 
 	fp:write(s)
 	fp:flush()
 	fp:close()
 
-	os.remove(del)
-	local _ = os.rename(path, del) 
-	local _ = os.rename(tmp, path) or log.fatal("rename %s %s fail",  tmp, path)
-	os.remove(del)
+	local cmd = string.format("mv %s %s", tmp, path)
+	os.execute(cmd)
 end
 
 local function load_file(path)
