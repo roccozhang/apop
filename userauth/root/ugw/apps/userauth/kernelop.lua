@@ -16,9 +16,9 @@ end
 
 local function get_policy()
 	local pols = policies.ins():data()
-	local pri, polarr = 1, {}
+	local pri, polarr = 100, {}
 	for _, item in ipairs(pols) do 
-		local authtype = item:get_type() == "web" and 1 or 0
+		local authtype = item:get_type() == "web" and 0 or 1
 		local map = {
 			AuthPolicyName = item:get_name(),
 			Enable = 1, 
@@ -27,7 +27,7 @@ local function get_policy()
 			IpRange = {{Start = item:get_ip1(), End = item:get_ip2()}},
 		}
 		table.insert(polarr, map)
-		pri = pri + 1
+		pri = pri - 1 	assert(pri >= 0)
 	end 
 	return polarr
 end
@@ -44,7 +44,7 @@ local function reset()
 	}
 	
 	local cmd = string.format("auth_tool '%s' 2>&1", js.encode(cfg))
-	-- print(cmd)
+	print(cmd)
 	read(cmd, io.popen)
 end
 
@@ -54,6 +54,7 @@ local function update_user_status(mac_arr, action)
 		table.insert(st_arr, {UserMac = mac, Action = action})
 	end
 	local cmd = string.format("auth_tool '%s'", js.encode({UpdateUserStatus = st_arr}))
+	print(cmd)
 	read(cmd, io.popen)
 end
 
