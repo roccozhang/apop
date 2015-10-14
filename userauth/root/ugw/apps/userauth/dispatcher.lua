@@ -8,6 +8,7 @@ local userlist = require("userlist")
 local onlinelist = require("onlinelist")
 
 local function status(msg, ok)
+	print(msg, ok)
 	return {status = ok and 0 or 1, data = msg}
 end
 
@@ -58,7 +59,7 @@ local function auth(map)
 		return status("invalid username/password")
 	end 
 
-	if not user:check_multi() then
+	if not user:check_multi(ol:exist_user(username)) then
 		return status("multi disabled")
 	end
 

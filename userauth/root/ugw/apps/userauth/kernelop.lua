@@ -45,6 +45,7 @@ local function reset()
 	}
 	
 	local cmd = string.format("auth_tool '%s' 2>&1", js.encode(cfg))
+	cmd = cmd:gsub("{}", "[]")
 	read(cmd, io.popen)
 end
 
@@ -54,7 +55,6 @@ local function update_user_status(mac_arr, action)
 		table.insert(st_arr, {UserMac = mac, Action = action})
 	end
 	local cmd = string.format("auth_tool '%s'", js.encode({UpdateUserStatus = st_arr}))
-	-- print(cmd) 
 	read(cmd, io.popen)
 end
 
