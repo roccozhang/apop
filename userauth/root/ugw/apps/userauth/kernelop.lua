@@ -18,17 +18,16 @@ local function get_policy()
 	local pols = policies.ins():data()
 	local pri, polarr = 1, {}
 	for _, item in ipairs(pols) do 
-		if item:get_type() == "web" then
-			local map = {
-				AuthPolicyName = item:get_name(),
-				Enable = 1, 
-				AuthType = 0,
-				Priority = pri,
-				IpRange = {{Start = item:get_ip1(), End = item:get_ip2()}},
-			}
-			table.insert(polarr, map)
-			pri = pri + 1
-		end
+		local authtype = item:get_type() == "web" and 1 or 0
+		local map = {
+			AuthPolicyName = item:get_name(),
+			Enable = 1, 
+			AuthType = authtype,
+			Priority = pri,
+			IpRange = {{Start = item:get_ip1(), End = item:get_ip2()}},
+		}
+		table.insert(polarr, map)
+		pri = pri + 1
 	end 
 	return polarr
 end
@@ -45,7 +44,7 @@ local function reset()
 	}
 	
 	local cmd = string.format("auth_tool '%s' 2>&1", js.encode(cfg))
-	cmd = cmd:gsub("{}", "[]")
+	-- print(cmd)
 	read(cmd, io.popen)
 end
 
