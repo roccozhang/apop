@@ -202,7 +202,7 @@ end
 local function create_server()
 	local server = mongoose.create_server()
 	server:set_ev_handler(dispatcher)
-	local web_root, http_port = "/www/webui", "8080"
+	local web_root, http_port = "/tmp/www/webui", "8080"
 	server:set_option("document_root", web_root)
 	server:set_option("listening_port", http_port)
 	return server

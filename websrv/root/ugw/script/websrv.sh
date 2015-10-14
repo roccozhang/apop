@@ -1,5 +1,8 @@
 #!/bin/sh
 
+mkdir -p /tmp/www 
+cd /www && cp -r webui /tmp/www/
+
 ps | grep websrv/main.lua | grep -v grep >/dev/null 
 test $? -eq 0 && exit 0
 
