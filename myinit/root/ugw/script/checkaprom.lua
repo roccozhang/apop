@@ -74,6 +74,8 @@ function cmdmap.download(host, rtype)
 
 	local cmd = string.format("rm /tmp/www/webui/rom/%s*; mv %s/* /tmp/www/webui/rom/", rtype, tmp_release)
 	os.execute(cmd)
+	os.execute("rm -rf " .. download_dir)
+	io.stdout:write(string.format(fmt, 0, "download ok"))
 end
 
 local args = {...}
