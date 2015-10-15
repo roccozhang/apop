@@ -116,7 +116,7 @@ local function loop_param()
 				mqtt:publish("a/ac/cfgmgr/query", js.encode(map))
 			end
 		end 
-		se.sleep(5)
+		se.sleep(10)
 	end
 end
 

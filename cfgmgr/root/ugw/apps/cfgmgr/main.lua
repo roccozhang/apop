@@ -7,9 +7,9 @@ local redis = require("lredis")
 local online = require("online")
 local js = require("cjson.safe") 
 local const = require("constant") 
+local memfile = require("memfile")
 local cfgmgr = require("cfgmanager")
 local dispatch = require("dispatch")
-
 
 local keys = const.keys
 
@@ -17,7 +17,27 @@ local mqtt, rds
 local topic_map = {} 
 
 local function cursec()
-	return os.time()
+	return math.floor(se.time())
+end
+
+
+local function set_login_time(group, apid, force)
+	local key = string.format("%s %s", group, apid)
+
+	local ins = memfile.ins("aplogin") 
+	local lasttime = ins:get(key)
+
+	local set_rds = function()
+		local t = os.date("*t") 
+		local s = string.format("%04d-%02d-%02d %02d:%02d:%02d", t.year, t.month, t.day, t.hour, t.min, t.sec) 
+		local hkey = string.format("login/%s", group) 
+		local ret = rds:hset(hkey, apid, s)  
+		ins:set(key, s):save()
+	end
+
+	if force or not lasttime then 
+		return set_rds()
+	end
 end
 
 local function cfgset(g, k, v)
@@ -51,7 +71,8 @@ topic_map["a/ac/query/version"] = function(map)
 		return 
 	end
 	
-	online.set_online(group, apid)
+	set_login_time(group, apid)
+	online.set_online(group, apid) 
 
 	local key = pkey.version(apid)
 	local curver = cfgget(group, key)
@@ -74,7 +95,17 @@ topic_map["a/ac/query/version"] = function(map)
 end
 
 topic_map["a/ac/cfgmgr/register"] = function(map) 
-	-- {"pld":data,"mod":reply_mod,"seq":reply_seq, "tpc":reply_topic}
+	local data = cmd.data
+	if not data then 
+		return 
+	end 
+	local apid, group = data[1], data[2]		
+	if not (#apid == 17 and group) then
+		return 
+	end
+
+	set_login_time(group, apid)
+
 	local res, apid, apid_map = dispatch.register(map.pld)
 	
 	local p = {
@@ -213,24 +244,20 @@ topic_map["a/ac/query/will"] = function(map)
 	end 
 	online.set_offline(map.group, map.apid)
 end
-
+-- a/ac/query/connect	["default",{"data":{"auth":{"config_version":0}},"apid":"78:d3:8d:c3:93:cd"}]
 topic_map["a/ac/query/connect"] = function(map)
-	local arr = map.pld
-	if not arr then 
+	local map = map.pld
+	if not (map and map.group and map.apid and map.data) then 
 		return 
 	end  
 
-	local group, apid = arr[1], arr[2] 	assert(#apid == 17)
+	local group, apid = map.group, map.apid
 	if not (group and apid) then 
 		return
 	end 
 
+	set_login_time(group, apid, true)
 	online.set_online(group, apid)
-
-	local t = os.date("*t") 
-	local s = string.format("%04d-%02d-%02d %02d:%02d:%02d", t.year, t.month, t.day, t.hour, t.min, t.sec) 
-	local hkey = string.format("login/%s", group) 
-	local ret = rds:hset(hkey, apid, s)  
 end
  
 topic_map["a/ac/query/noupdate"] = function(map)
