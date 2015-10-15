@@ -95,6 +95,7 @@ topic_map["a/ac/query/version"] = function(map)
 end
 
 topic_map["a/ac/cfgmgr/register"] = function(map) 
+	local cmd = map.pld 
 	local data = cmd.data
 	if not data then 
 		return 
